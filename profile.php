@@ -235,7 +235,6 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                             <div class="card-body">
                                                 <h5 class="card-title mb-1"><?php echo htmlspecialchars($album['title']); ?></h5>
                                                 <p class="card-text text-muted mb-1"><?php echo htmlspecialchars($album['artist']); ?></p>
-                                                <a href="album-detail.php?id=<?php echo $album['id']; ?>" class="btn btn-outline-primary btn-sm">Details</a>
                                             </div>
                                         </div>
                                     </div>
@@ -303,7 +302,6 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                             <div class="card-body">
                                                 <h5 class="card-title mb-1"><?php echo htmlspecialchars($album['title']); ?></h5>
                                                 <p class="card-text text-muted mb-1"><?php echo htmlspecialchars($album['artist']); ?></p>
-                                                <a href="album-detail.php?id=<?php echo $album['id']; ?>" class="btn btn-outline-primary btn-sm">Details</a>
                                             </div>
                                         </div>
                                     </div>

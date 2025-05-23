@@ -163,7 +163,12 @@ $rating_count = $rating_stats ? $rating_stats['rating_count'] : 0;
                         <?php endif; ?>
                     </div>
                     <div class="col-md-8">
-                        <div class="card-body">
+                        <div class="card-body position-relative">
+                            <?php if (isLoggedIn() && isset($_SESSION['user_id']) && $_SESSION['user_id'] == $album['user_id']): ?>
+                                <button class="delete-album-btn-custom" id="deleteAlbumBtn" title="Delete Album" style="position:absolute;top:10px;right:10px;z-index:2;">
+                                    <i class="icon-trash"></i>
+                                </button>
+                            <?php endif; ?>
                             <h3 class="card-title mb-1"><?php echo h($album['title']); ?></h3>
                             <h5 class="card-subtitle mb-2 text-muted"><?php echo h($album['artist']); ?></h5>
                             <?php if ($album['rating']): ?>
@@ -258,6 +263,68 @@ $rating_count = $rating_stats ? $rating_stats['rating_count'] : 0;
         </div>
     </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteAlbumModal" tabindex="-1" aria-labelledby="deleteAlbumModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title w-100 text-center" id="deleteAlbumModalLabel">Delete Album</h5>
+      </div>
+      <div class="modal-body text-center">
+        Are you sure you want to delete this album?
+      </div>
+      <div class="modal-footer justify-content-center border-0">
+        <button type="button" class="btn btn-danger" id="confirmDeleteAlbumBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var deleteBtn = document.getElementById('deleteAlbumBtn');
+    if(deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            var modal = new bootstrap.Modal(document.getElementById('deleteAlbumModal'));
+            modal.show();
+        });
+    }
+    var confirmBtn = document.getElementById('confirmDeleteAlbumBtn');
+    if(confirmBtn) {
+        confirmBtn.addEventListener('click', function() {
+            window.location.href = 'delete-album.php?id=<?php echo $album_id; ?>';
+        });
+    }
+});
+</script>
+
+<style>
+.delete-album-btn-custom {
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    padding: 0;
+}
+.delete-album-btn-custom i {
+    color: #888;
+    font-size: 18px;
+    transition: color 0.2s;
+}
+.delete-album-btn-custom:hover {
+    box-shadow: 0 4px 16px rgba(255,0,0,0.10);
+}
+.delete-album-btn-custom:hover i {
+    color: #e74c3c;
+}
+</style>
 
 <?php require_once 'includes/footer.php'; ?>
 </body>
