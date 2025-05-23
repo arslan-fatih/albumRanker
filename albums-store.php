@@ -59,7 +59,7 @@
         </div>
     </header>
     <!-- ##### Breadcumb Area Start ##### -->
-    <section class="breadcumb-area bg-img bg-overlay" style="background-image: url(img/bg-img/breadcumb3.jpg);">
+    <section class="breadcumb-area bg-img bg-overlay" style="background-image: url('https://www.chapmanarchitects.co.uk/wp-content/uploads/2017/08/Abbey_Road_4.jpg');">
         <div class="bradcumbContent">
             <p>Discover</p>
             <h2>Uploaded Albums</h2>

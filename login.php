@@ -85,7 +85,7 @@
     <!-- ##### Header Area End ##### -->
 
     <!-- ##### Breadcumb Area Start ##### -->
-    <section class="breadcumb-area bg-img bg-overlay" style="background-image: url(img/bg-img/breadcumb3.jpg);">
+    <section class="breadcumb-area bg-img bg-overlay" style="background-image: url('https://www.chapmanarchitects.co.uk/wp-content/uploads/2017/08/Abbey_Road_4.jpg');">
         <div class="bradcumbContent">
             <p>Welcome to AlbumRanker</p>
             <h2>Login or Register</h2>

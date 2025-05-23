@@ -177,7 +177,7 @@ $genres = $stmt->fetchAll();
 ?>
 
 <!-- Hero/Banner Area Discover'daki gibi -->
-<section class="hero-area bg-img bg-overlay" style="background-image: url('img/bg-img/bg-1.jpg');">
+<section class="hero-area bg-img bg-overlay" style="background-image: url('https://www.chapmanarchitects.co.uk/wp-content/uploads/2017/08/Abbey_Road_4.jpg'); min-height: 340px; display: flex; align-items: center; position: relative;">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-12 col-md-8">

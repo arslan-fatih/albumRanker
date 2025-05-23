@@ -168,6 +168,9 @@ $rating_count = $rating_stats ? $rating_stats['rating_count'] : 0;
                                 <button class="delete-album-btn-custom" id="deleteAlbumBtn" title="Delete Album" style="position:absolute;top:10px;right:10px;z-index:2;">
                                     <i class="icon-trash"></i>
                                 </button>
+                                <a href="edit-album.php?id=<?php echo $album_id; ?>" class="edit-album-btn-custom" title="Edit Album" style="position:absolute;top:10px;right:56px;z-index:2;">
+                                    <i class="fas fa-edit"></i>
+                                </a>
                             <?php endif; ?>
                             <h3 class="card-title mb-1"><?php echo h($album['title']); ?></h3>
                             <h5 class="card-subtitle mb-2 text-muted"><?php echo h($album['artist']); ?></h5>
@@ -323,6 +326,32 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 .delete-album-btn-custom:hover i {
     color: #e74c3c;
+}
+.edit-album-btn-custom {
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    padding: 0;
+    text-decoration: none;
+}
+.edit-album-btn-custom i {
+    color: #888;
+    font-size: 18px;
+    transition: color 0.2s;
+}
+.edit-album-btn-custom:hover {
+    box-shadow: 0 4px 16px rgba(52,152,219,0.10);
+}
+.edit-album-btn-custom:hover i {
+    color: #3498db;
 }
 </style>
 

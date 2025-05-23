@@ -128,7 +128,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
             </div>
         </div>
     </header>
-    <section class="breadcumb-area bg-img bg-overlay" style="background-image: url(img/bg-img/breadcumb3.jpg);">
+    <section class="hero-area bg-img bg-overlay" style="background-image: url('https://www.chapmanarchitects.co.uk/wp-content/uploads/2017/08/Abbey_Road_4.jpg'); min-height: 340px; display: flex; align-items: center; position: relative;">
         <div class="bradcumbContent">
             <p>User Profile</p>
             <h2 id="profileUsername"><?php echo htmlspecialchars($user['username']); ?></h2>
@@ -140,18 +140,37 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                 <div class="col-12 col-lg-4">
                     <div class="profile-info">
                         <div class="profile-pic text-center mb-30">
-                            <img id="profilePic" src="<?php echo htmlspecialchars($user['profile_pic'] && $user['profile_pic'] !== '' ? 'uploads/profiles/' . $user['profile_pic'] : 'img/bg-img/profile-pic.jpg'); ?>" alt="Profile Picture" class="rounded-circle" style="width: 200px; height: 200px; object-fit: cover;">
-                            <?php if (
-                                isset(
-                                    $isOwnProfile
-                                ) && $isOwnProfile): ?>
-                            <form id="profilePictureForm" enctype="multipart/form-data" class="mt-3">
-                                <input type="file" class="form-control mb-2" id="profilePicture" name="profile" accept="image/jpeg,image/png,image/gif" required>
-                                <button type="submit" class="btn btn-sm btn-primary">Upload Profile Picture</button>
-                                <button type="submit" class="btn btn-sm btn-primary">Profil Fotoğrafı Yükle</button>
-                                <div class="form-text">JPG, PNG, GIF. Maks: 5MB</div>
-                                <div id="profilePicMessage" class="mt-2"></div>
-                            </form>
+                            <img id="profilePic" src="<?php echo htmlspecialchars($user['profile_pic'] ?: 'img/bg-img/profile-pic.jpg'); ?>" alt="Profile Picture" class="rounded-circle" style="width: 200px; height: 200px; object-fit: cover;">
+                            <?php if (isset(
+                                $isOwnProfile
+                            ) && $isOwnProfile): ?>
+                                <?php if ($user['profile_pic']): ?>
+                                    <button type="button" class="btn btn-outline-secondary mt-3" id="editProfilePicBtn">Edit Profile Picture</button>
+                                <?php else: ?>
+                                    <button type="button" class="btn btn-primary mt-3" id="editProfilePicBtn">Add Profile Picture</button>
+                                <?php endif; ?>
+                                <!-- Modal -->
+                                <div class="modal fade" id="profilePicModal" tabindex="-1" aria-labelledby="profilePicModalLabel" aria-hidden="true">
+                                  <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                      <div class="modal-header border-0">
+                                        <h5 class="modal-title w-100 text-center" id="profilePicModalLabel">Profile Picture</h5>
+                                      </div>
+                                      <div class="modal-body text-center">
+                                        <button type="button" class="btn btn-outline-primary w-100 mb-2" id="changeProfilePicBtn">Change Profile Picture</button>
+                                        <?php if ($user['profile_pic']): ?>
+                                        <button type="button" class="btn btn-outline-danger w-100" id="removeProfilePicBtn">Remove Profile Picture</button>
+                                        <?php endif; ?>
+                                        <form id="profilePictureForm" enctype="multipart/form-data" class="mt-3" style="display:none;">
+                                            <input type="file" class="form-control mb-2" id="profilePicture" name="profile" accept="image/jpeg,image/png,image/gif" required>
+                                            <button type="submit" class="btn btn-primary btn-sm">Upload</button>
+                                            <div class="form-text">JPG, PNG, GIF. Maks: 5MB</div>
+                                            <div id="profilePicMessage" class="mt-2"></div>
+                                        </form>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
                             <?php endif; ?>
                         </div>
                         <div class="profile-bio text-center mb-30">
@@ -376,6 +395,19 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
     <script src="js/active.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --- PROFİL FOTOĞRAF DEĞİŞKENLERİ ---
+        const form = document.getElementById('profilePictureForm');
+        const fileInput = document.getElementById('profilePicture');
+        const message = document.getElementById('profilePicMessage');
+        const profilePic = document.getElementById('profilePic');
+        // Modal kapandığında formu ve mesajı sıfırla
+        document.getElementById('profilePicModal').addEventListener('hidden.bs.modal', function () {
+            if (form) {
+                form.style.display = 'none';
+                form.reset();
+            }
+            if (message) message.innerHTML = '';
+        });
         // Takip Et / Takipten Çık butonu
         var followBtn = document.querySelector('.follow-btn');
         if (followBtn) {
@@ -399,11 +431,39 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
             });
         }
 
-        const form = document.getElementById('profilePictureForm');
-        if (!form) return;
-        const fileInput = document.getElementById('profilePicture');
-        const message = document.getElementById('profilePicMessage');
-        const profilePic = document.getElementById('profilePic');
+        const editBtn = document.getElementById('editProfilePicBtn');
+        const modal = new bootstrap.Modal(document.getElementById('profilePicModal'));
+        const changeBtn = document.getElementById('changeProfilePicBtn');
+        const removeBtn = document.getElementById('removeProfilePicBtn');
+        if (editBtn) {
+            editBtn.addEventListener('click', function() {
+                modal.show();
+            });
+        }
+        if (changeBtn) {
+            changeBtn.addEventListener('click', function() {
+                form.style.display = 'block';
+            });
+        }
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                fetch('upload.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=remove_profile'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('profilePic').src = 'img/bg-img/profile-pic.jpg?t=' + Date.now();
+                        modal.hide();
+                    } else {
+                        alert(data.message);
+                    }
+                });
+            });
+        }
+
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
         const maxSize = 5 * 1024 * 1024; // 5MB
 
@@ -430,14 +490,6 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                 message.innerHTML = '<div class="alert alert-danger">Lütfen bir dosya seçin.</div>';
                 return;
             }
-            if (!allowedTypes.includes(file.type)) {
-                message.innerHTML = '<div class="alert alert-danger">Sadece JPG, PNG veya GIF dosyası yükleyebilirsiniz.</div>';
-                return;
-            }
-            if (file.size > maxSize) {
-                message.innerHTML = '<div class="alert alert-danger">Dosya boyutu 5MB\'dan büyük olamaz.</div>';
-                return;
-            }
             const formData = new FormData();
             formData.append('action', 'upload_profile');
             formData.append('profile', file);
@@ -450,8 +502,8 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
             .then(data => {
                 if (data.success) {
                     message.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
-                    // Profil fotoğrafını anında güncelle
-                    profilePic.src = data.path + '?t=' + new Date().getTime();
+                    const imgPath = '/AlbumRanker' + data.file;
+                    profilePic.src = imgPath + '?t=' + Date.now();
                 } else {
                     message.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
                 }
