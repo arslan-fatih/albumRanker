@@ -37,7 +37,7 @@
                                     <li><a href="index.php">Home</a></li>
                                     <li><a href="albums-store.php">Discover</a></li>
                                     <?php if (isset($_SESSION['user_id'])): ?>
-                                    <li><a href="album-upload.php">Albüm Yükle</a></li>
+                                    <li><a href="album-upload.php">Upload Album</a></li>
                                     <?php endif; ?>
                                 </ul>
                                 <div class="login-register-cart-button d-flex align-items-center">
@@ -62,7 +62,7 @@
     <section class="breadcumb-area bg-img bg-overlay" style="background-image: url(img/bg-img/breadcumb3.jpg);">
         <div class="bradcumbContent">
             <p>Discover</p>
-            <h2>Yüklenmiş Albümler</h2>
+            <h2>Uploaded Albums</h2>
         </div>
     </section>
     <!-- ##### Breadcumb Area End ##### -->
@@ -71,16 +71,16 @@
         <div class="container">
             <form id="searchForm" method="get" class="row g-2 align-items-center justify-content-center">
                 <div class="col-12 col-md-6 col-lg-5">
-                    <input type="text" class="form-control" name="q" placeholder="Albüm veya kullanıcı ara...">
+                    <input type="text" class="form-control" name="q" placeholder="Search for album or user...">
                 </div>
                 <div class="col-6 col-md-3 col-lg-2">
                     <select class="form-select" name="type">
-                        <option value="album">Albüm</option>
-                        <option value="user">Kullanıcı</option>
+                        <option value="album">Album</option>
+                        <option value="user">User</option>
                     </select>
                 </div>
                 <div class="col-6 col-md-3 col-lg-2">
-                    <button type="submit" class="btn btn-primary w-100"><i class="fa fa-search me-1"></i> Ara</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="fa fa-search me-1"></i> Search</button>
                 </div>
             </form>
         </div>
@@ -90,7 +90,7 @@
     <main class="container my-5">
         <div class="row">
             <div class="col-12">
-                <h1 class="mb-4">Yüklenmiş Albümler</h1>
+                <h1 class="mb-4">Uploaded Albums</h1>
             </div>
         </div>
         <?php
@@ -102,7 +102,7 @@
         <?php if ($searchQuery !== ''): ?>
             <div class="row">
                 <div class="col-12 mb-3">
-                    <h5>Arama Sonuçları: <span class="text-primary"><?php echo htmlspecialchars($searchQuery); ?></span> (<?php echo $searchType === 'user' ? 'Kullanıcı' : 'Albüm'; ?>)</h5>
+                    <h5>Search Results: <span class="text-primary"><?php echo htmlspecialchars($searchQuery); ?></span> (<?php echo $searchType === 'user' ? 'User' : 'Album'; ?>)</h5>
                 </div>
             </div>
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
@@ -130,16 +130,16 @@
                             ?>
                             <div class="col">
                                 <div class="card h-100 shadow-sm text-center">
-                                    <img src="<?php echo htmlspecialchars($user['profile_pic'] ?? 'img/core-img/default.jpg'); ?>" class="rounded-circle mx-auto mt-3" alt="Profil" style="width:100px;height:100px;object-fit:cover;">
+                                    <img src="<?php echo htmlspecialchars($user['profile_pic'] ?? 'img/core-img/default.jpg'); ?>" class="rounded-circle mx-auto mt-3" alt="Profile" style="width:100px;height:100px;object-fit:cover;">
                                     <div class="card-body">
                                         <h5 class="card-title"><?php echo htmlspecialchars($user['username']); ?></h5>
                                         <p class="card-text text-muted"><?php echo htmlspecialchars($user['bio'] ?? ''); ?></p>
                                         <div class="d-flex justify-content-center gap-2 mt-2">
                                             <?php if ($currentUserId): ?>
-                                                <button class="btn btn-outline-primary btn-sm follow-btn" data-user-id="<?php echo $user['id']; ?>"><?php echo $isFollowing ? 'Takipten Çık' : 'Takip Et'; ?></button>
+                                                <button class="btn btn-outline-primary btn-sm follow-btn" data-user-id="<?php echo $user['id']; ?>"><?php echo $isFollowing ? 'Unfollow' : 'Follow'; ?></button>
                                             <?php endif; ?>
                                             <?php if (!isset($currentUserId) || $user['id'] != $currentUserId): ?>
-                                                <a href="profile.php?user=<?php echo $user['id']; ?>" class="btn btn-primary btn-sm">Profili Gör</a>
+                                                <a href="profile.php?user=<?php echo $user['id']; ?>" class="btn btn-primary btn-sm">View Profile</a>
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -148,7 +148,7 @@
                             <?php
                         }
                     } else {
-                        echo '<div class="col-12 text-center"><p>Kullanıcı bulunamadı.</p></div>';
+                        echo '<div class="col-12 text-center"><p>User not found.</p></div>';
                     }
                 } else {
                     // Albüm araması
@@ -188,7 +188,7 @@
                             <?php
                         }
                     } else {
-                        echo '<div class="col-12 text-center"><p>Albüm bulunamadı.</p></div>';
+                        echo '<div class="col-12 text-center"><p>Album not found.</p></div>';
                     }
                 }
                 ?>
@@ -215,7 +215,7 @@
                             <li><a href="index.php">Home</a></li>
                             <li><a href="albums-store.php">Discover</a></li>
                             <?php if (isset($_SESSION['user_id'])): ?>
-                            <li><a href="album-upload.php">Albüm Yükle</a></li>
+                            <li><a href="album-upload.php">Upload Album</a></li>
                             <?php endif; ?>
                         </ul>
                     </div>
@@ -238,12 +238,12 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        button.textContent = data.following ? 'Takipten Çık' : 'Takip Et';
+                        button.textContent = data.following ? 'Unfollow' : 'Follow';
                     } else {
-                        alert(data.message || 'Bir hata oluştu.');
+                        alert(data.message || 'An error occurred.');
                     }
                 })
-                .catch(() => alert('Bir hata oluştu.'));
+                .catch(() => alert('An error occurred.'));
             });
         });
     });

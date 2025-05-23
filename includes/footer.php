@@ -14,7 +14,7 @@
                             <li><a href="index.php">Home</a></li>
                             <li><a href="albums-store.php">Discover</a></li>
                             <?php if (isset($isLoggedIn) && $isLoggedIn): ?>
-                            <li><a href="album-upload.php">Albüm Yükle</a></li>
+                            <li><a href="album-upload.php">Upload Album</a></li>
                             <?php endif; ?>
                         </ul>
                     </div>

@@ -13,7 +13,7 @@ if (isset($_GET['user'])) {
     $stmt->execute([$userId]);
     $user = $stmt->fetch();
     if (!$user) {
-        echo '<p class="text-center mt-5">Kullanıcı bulunamadı.</p>';
+        echo '<p class="text-center mt-5">User not found.</p>';
         exit;
     }
 } else {
@@ -27,7 +27,7 @@ if (isset($_GET['user'])) {
     $stmt->execute([$userId]);
     $user = $stmt->fetch();
     if (!$user) {
-        echo '<p class="text-center mt-5">Kullanıcı bulunamadı.</p>';
+        echo '<p class="text-center mt-5">User not found.</p>';
         exit;
     }
 }
@@ -116,6 +116,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                 ) && $isOwnProfile): ?>
                             <form id="profilePictureForm" enctype="multipart/form-data" class="mt-3">
                                 <input type="file" class="form-control mb-2" id="profilePicture" name="profile" accept="image/jpeg,image/png,image/gif" required>
+                                <button type="submit" class="btn btn-sm btn-primary">Upload Profile Picture</button>
                                 <button type="submit" class="btn btn-sm btn-primary">Profil Fotoğrafı Yükle</button>
                                 <div class="form-text">JPG, PNG, GIF. Maks: 5MB</div>
                                 <div id="profilePicMessage" class="mt-2"></div>
@@ -130,7 +131,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                         <div class="user-stats">
                             <div class="stat-item">
                                 <span class="stat-value"><?php echo $albumCount; ?></span>
-                                <span class="stat-label">Albüm</span>
+                                <span class="stat-label">Albums</span>
                             </div>
                             <div class="stat-item">
                                 <a href="followers.php?user_id=<?php echo $user['id']; ?>&type=followers" class="text-decoration-none">
@@ -139,7 +140,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                         $stmt->execute([$user['id']]);
                                         echo $stmt->fetchColumn();
                                     ?></span>
-                                    <span class="stat-label">Takipçi</span>
+                                    <span class="stat-label">Followers</span>
                                 </a>
                             </div>
                             <div class="stat-item">
@@ -149,14 +150,14 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                         $stmt->execute([$user['id']]);
                                         echo $stmt->fetchColumn();
                                     ?></span>
-                                    <span class="stat-label">Takip Edilen</span>
+                                    <span class="stat-label">Following</span>
                                 </a>
                             </div>
                         </div>
                         <div class="profile-achievements text-center mb-30" style="display:none;"></div>
                         <?php if (!$isOwnProfile && isset($_SESSION['user_id'])): ?>
                         <div class="profile-actions text-center mb-3">
-                            <button class="btn btn-outline-primary follow-btn" data-user-id="<?php echo $user['id']; ?>"><?php echo $isFollowing ? 'Takipten Çık' : 'Takip Et'; ?></button>
+                            <button class="btn btn-outline-primary follow-btn" data-user-id="<?php echo $user['id']; ?>"><?php echo $isFollowing ? 'Unfollow' : 'Follow'; ?></button>
                         </div>
                         <?php endif; ?>
                     </div>
@@ -198,7 +199,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                             <div class="card-body">
                                                 <h5 class="card-title mb-1"><?php echo htmlspecialchars($album['title']); ?></h5>
                                                 <p class="card-text text-muted mb-1"><?php echo htmlspecialchars($album['artist']); ?></p>
-                                                <a href="album-detail.php?id=<?php echo $album['id']; ?>" class="btn btn-outline-primary btn-sm">Detay</a>
+                                                <a href="album-detail.php?id=<?php echo $album['id']; ?>" class="btn btn-outline-primary btn-sm">Details</a>
                                             </div>
                                         </div>
                                     </div>
@@ -237,7 +238,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                         <div class="card-body">
                                             <p class="card-text"><?php echo nl2br(htmlspecialchars($review['content'])); ?></p>
                                             <?php if (isset($review['rating'])) { ?>
-                                            <p class="card-text text-muted mb-0">Puan: <?php echo htmlspecialchars($review['rating']); ?>/10</p>
+                                            <p class="card-text text-muted mb-0">Rating: <?php echo htmlspecialchars($review['rating']); ?>/10</p>
                                             <?php } ?>
                                         </div>
                                     </div>
@@ -266,7 +267,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                             <div class="card-body">
                                                 <h5 class="card-title mb-1"><?php echo htmlspecialchars($album['title']); ?></h5>
                                                 <p class="card-text text-muted mb-1"><?php echo htmlspecialchars($album['artist']); ?></p>
-                                                <a href="album-detail.php?id=<?php echo $album['id']; ?>" class="btn btn-outline-primary btn-sm">Detay</a>
+                                                <a href="album-detail.php?id=<?php echo $album['id']; ?>" class="btn btn-outline-primary btn-sm">Details</a>
                                             </div>
                                         </div>
                                     </div>
@@ -291,7 +292,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                         <img src="<?php echo htmlspecialchars($follower['profile_pic'] ?? 'img/core-img/default.jpg'); ?>" class="rounded-circle me-2" alt="Profil" style="width:32px;height:32px;object-fit:cover;">
                                         <a href="profile.php?user=<?php echo $follower['id']; ?>" class="text-decoration-none"><?php echo htmlspecialchars($follower['username']); ?></a>
                                     </li>
-                                    <?php }} else { echo '<li class="list-group-item text-center">Takipçi yok.</li>'; } ?>
+                                    <?php }} else { echo '<li class="list-group-item text-center">No followers.</li>'; } ?>
                                 </ul>
                             </div>
                             <div class="tab-pane fade" id="followed" role="tabpanel">
@@ -307,7 +308,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                         <img src="<?php echo htmlspecialchars($f['profile_pic'] ?? 'img/core-img/default.jpg'); ?>" class="rounded-circle me-2" alt="Profil" style="width:32px;height:32px;object-fit:cover;">
                                         <a href="profile.php?user=<?php echo $f['id']; ?>" class="text-decoration-none"><?php echo htmlspecialchars($f['username']); ?></a>
                                     </li>
-                                    <?php }} else { echo '<li class="list-group-item text-center">Takip edilen yok.</li>'; } ?>
+                                    <?php }} else { echo '<li class="list-group-item text-center">No following.</li>'; } ?>
                                 </ul>
                             </div>
                         </div>
@@ -355,7 +356,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        button.textContent = data.following ? 'Takipten Çık' : 'Takip Et';
+                        button.textContent = data.following ? 'Unfollow' : 'Follow';
                     } else {
                         alert(data.message || 'Bir hata oluştu.');
                     }

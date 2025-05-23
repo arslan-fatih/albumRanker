@@ -51,7 +51,7 @@ $users = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($user['username']); ?> - <?php echo $type === 'followers' ? 'Takipçiler' : 'Takip Edilenler'; ?></title>
+    <title><?php echo htmlspecialchars($user['username']); ?> - <?php echo $type === 'followers' ? 'Followers' : 'Following'; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -65,7 +65,7 @@ $users = $stmt->fetchAll();
             <div class="col-12">
                 <h2 class="mb-4">
                     <?php echo htmlspecialchars($user['username']); ?> - 
-                    <?php echo $type === 'followers' ? 'Takipçiler' : 'Takip Edilenler'; ?>
+                    <?php echo $type === 'followers' ? 'Followers' : 'Following'; ?>
                 </h2>
                 
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
@@ -83,9 +83,9 @@ $users = $stmt->fetchAll();
                                     <?php if ($user['id'] != $_SESSION['user_id']): ?>
                                         <button class="btn btn-outline-primary btn-sm follow-btn" 
                                                 data-user-id="<?php echo $user['id']; ?>">
-                                            <?php echo $user['is_following'] ? 'Takipten Çık' : 'Takip Et'; ?>
+                                            <?php echo $user['is_following'] ? 'Unfollow' : 'Follow'; ?>
                                         </button>
-                                        <a href="profile.php?user=<?php echo $user['id']; ?>" class="btn btn-primary btn-sm">Profili Gör</a>
+                                        <a href="profile.php?user=<?php echo $user['id']; ?>" class="btn btn-primary btn-sm">View Profile</a>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -112,12 +112,12 @@ $users = $stmt->fetchAll();
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        button.textContent = data.following ? 'Takipten Çık' : 'Takip Et';
+                        button.textContent = data.following ? 'Unfollow' : 'Follow';
                     } else {
-                        alert(data.message || 'Bir hata oluştu.');
+                        alert(data.message || 'An error occurred.');
                     }
                 })
-                .catch(() => alert('Bir hata oluştu.'));
+                .catch(() => alert('An error occurred.'));
             });
         });
     });

@@ -88,7 +88,7 @@
             <div class="row">
                 <div class="col-12">
                     <div class="section-heading style-2">
-                        <h2>Yüklenmiş Albümler</h2>
+                        <h2>Uploaded Albums</h2>
                     </div>
                 </div>
             </div>
@@ -118,13 +118,13 @@
     </section>
     <!-- ##### Latest Albums Area End ##### -->
 
-    <!-- ##### Haftanın En Çok Oy Alan Albümleri ##### -->
+    <!-- ##### Most Voted Albums of the Week ##### -->
     <section class="top-albums-area section-padding-100">
         <div class="container">
             <div class="row">
                 <div class="col-12">
                     <div class="section-heading style-2">
-                        <h2>Haftanın En Çok Oy Alan Albümleri</h2>
+                        <h2>Most Voted Albums of the Week</h2>
                     </div>
                 </div>
             </div>
@@ -152,15 +152,15 @@
             </div>
         </div>
     </section>
-    <!-- ##### Haftanın En Çok Oy Alan Albümleri End ##### -->
+    <!-- ##### Most Voted Albums of the Week End ##### -->
 
-    <!-- ##### Az Oy Almış Yüksek Puanlı Albümler ##### -->
+    <!-- ##### High Rated Albums with Few Votes ##### -->
     <section class="underrated-albums-area section-padding-100">
         <div class="container">
             <div class="row">
                 <div class="col-12">
                     <div class="section-heading style-2">
-                        <h2>Az Oy Almış Yüksek Puanlı Albümler</h2>
+                        <h2>High Rated Albums with Few Votes</h2>
                     </div>
                 </div>
             </div>
@@ -188,7 +188,7 @@
             </div>
         </div>
     </section>
-    <!-- ##### Az Oy Almış Yüksek Puanlı Albümler End ##### -->
+    <!-- ##### High Rated Albums with Few Votes End ##### -->
 
     <?php require_once 'includes/footer.php'; ?>
 </body>

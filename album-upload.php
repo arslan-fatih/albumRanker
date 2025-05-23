@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Albüm Yükle - AlbumRanker</title>
+    <title>Upload Album - AlbumRanker</title>
     <link rel="icon" href="img/core-img/favicon.ico">
     <link rel="stylesheet" href="style.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -47,7 +47,7 @@
 </head>
 <body>
 <?php
-$pageTitle = 'Albüm Yükle - AlbumRanker';
+$pageTitle = 'Upload Album - AlbumRanker';
 require_once 'includes/header.php';
 
 // Oturum kontrolü
@@ -58,11 +58,11 @@ $success = $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF kontrolü
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        $error = 'Güvenlik doğrulaması başarısız. Lütfen sayfayı yenileyip tekrar deneyin.';
+        $error = 'Security verification failed. Please refresh the page and try again.';
     } else {
         // Rate limiting kontrolü
         if (!checkRateLimit('album_upload', 5, 3600)) { // 1 saatte en fazla 5 albüm
-            $error = 'Çok fazla albüm yükleme denemesi. Lütfen bir süre bekleyin.';
+            $error = 'Too many album upload attempts. Please wait a while.';
         } else {
             // Input temizleme
             $album_title = sanitize($_POST['album_title']);
@@ -79,31 +79,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors = [];
             
             if (empty($album_title)) {
-                $errors[] = 'Albüm adı gereklidir.';
+                $errors[] = 'Album title is required.';
             }
             
             if (empty($artist)) {
-                $errors[] = 'Sanatçı adı gereklidir.';
+                $errors[] = 'Artist name is required.';
             }
             
             if (empty($cover_url) || !filter_var($cover_url, FILTER_VALIDATE_URL)) {
-                $errors[] = 'Geçerli bir kapak görseli URL\'si giriniz.';
+                $errors[] = 'Please enter a valid cover image URL.';
             }
             
             if (!empty($wiki_url) && !filter_var($wiki_url, FILTER_VALIDATE_URL)) {
-                $errors[] = 'Geçerli bir Wikipedia albüm linki giriniz.';
+                $errors[] = 'Please enter a valid Wikipedia album link.';
             }
             
             if ($rating !== null && ($rating < 1 || $rating > 10)) {
-                $errors[] = 'Puan 1-10 arasında olmalıdır.';
+                $errors[] = 'Rating must be between 1-10.';
             }
             
             if (!empty($release_date) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $release_date)) {
-                $errors[] = 'Geçerli bir çıkış tarihi giriniz (YYYY-AA-GG).';
+                $errors[] = 'Please enter a valid release date (YYYY-MM-DD).';
             }
             
             if (in_array('other', $_POST['genres'] ?? []) && empty($other_genre)) {
-                $errors[] = 'Lütfen diğer türü belirtin.';
+                $errors[] = 'Please specify the other genre.';
             }
             
             if (empty($errors)) {
@@ -155,14 +155,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     
                     $conn->commit();
-                    setFlashMessage('success', 'Albüm başarıyla yüklendi!');
+                    setFlashMessage('success', 'Album uploaded successfully!');
                     header('Location: album-detail.php?id=' . $albumId);
                     exit();
                     
                 } catch (Exception $e) {
                     $conn->rollBack();
-                    error_log("Albüm yükleme hatası: " . $e->getMessage());
-                    $error = 'Albüm yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.';
+                    error_log("Album upload error: " . $e->getMessage());
+                    $error = 'An error occurred while uploading the album. Please try again later.';
                 }
             } else {
                 $error = implode('<br>', $errors);
@@ -182,8 +182,8 @@ $genres = $stmt->fetchAll();
         <div class="row justify-content-center">
             <div class="col-12 col-md-8">
                 <div class="text-center p-4 bg-white bg-opacity-75 rounded shadow" style="margin-top: 60px;">
-                    <span class="text-muted">Albüm Yükle</span>
-                    <h2 class="display-5 fw-bold mb-0">YENİ ALBÜM EKLE</h2>
+                    <span class="text-muted">Upload Album</span>
+                    <h2 class="display-5 fw-bold mb-0">ADD NEW ALBUM</h2>
                 </div>
             </div>
         </div>
@@ -202,37 +202,37 @@ $genres = $stmt->fetchAll();
             <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
             
             <div class="mb-3">
-                <label for="album_title" class="form-label">Albüm Adı</label>
+                <label for="album_title" class="form-label">Album Title</label>
                 <input type="text" class="form-control" id="album_title" name="album_title" required value="<?php echo isset($_POST['album_title']) ? h($_POST['album_title']) : ''; ?>">
-                <div class="invalid-feedback">Albüm adı gereklidir.</div>
+                <div class="invalid-feedback">Album title is required.</div>
             </div>
             
             <div class="mb-3">
-                <label for="artist" class="form-label">Sanatçı</label>
+                <label for="artist" class="form-label">Artist</label>
                 <input type="text" class="form-control" id="artist" name="artist" required value="<?php echo isset($_POST['artist']) ? h($_POST['artist']) : ''; ?>">
-                <div class="invalid-feedback">Sanatçı adı gereklidir.</div>
+                <div class="invalid-feedback">Artist name is required.</div>
             </div>
             
             <div class="mb-3">
-                <label for="cover_url" class="form-label">Kapak Görseli URL'si</label>
+                <label for="cover_url" class="form-label">Cover Image URL</label>
                 <input type="url" class="form-control" id="cover_url" name="cover_url" required placeholder="https://..." value="<?php echo isset($_POST['cover_url']) ? h($_POST['cover_url']) : ''; ?>">
-                <div class="invalid-feedback">Geçerli bir kapak görseli URL'si giriniz.</div>
+                <div class="invalid-feedback">Please enter a valid cover image URL.</div>
             </div>
             
             <div class="mb-3">
-                <label for="wiki_url" class="form-label">Wikipedia Albüm Linki (isteğe bağlı)</label>
+                <label for="wiki_url" class="form-label">Wikipedia Album Link (optional)</label>
                 <input type="url" class="form-control" id="wiki_url" name="wiki_url" placeholder="https://..." value="<?php echo isset($_POST['wiki_url']) ? h($_POST['wiki_url']) : ''; ?>">
-                <div class="invalid-feedback">Geçerli bir Wikipedia URL'si giriniz.</div>
+                <div class="invalid-feedback">Please enter a valid Wikipedia URL.</div>
             </div>
             
             <div class="mb-3">
-                <label for="release_date" class="form-label">Çıkış Tarihi</label>
+                <label for="release_date" class="form-label">Release Date</label>
                 <input type="date" class="form-control" id="release_date" name="release_date" value="<?php echo isset($_POST['release_date']) ? h($_POST['release_date']) : ''; ?>">
-                <div class="form-text">Opsiyonel. Albümün çıkış tarihini giriniz.</div>
+                <div class="form-text">Optional. Enter the album's release date.</div>
             </div>
             
             <div class="mb-3">
-                <label for="genres" class="form-label">Türler</label>
+                <label for="genres" class="form-label">Genres</label>
                 <select class="form-select select2" id="genres" name="genres[]" multiple onchange="toggleOtherGenre()">
                     <?php foreach ($genres as $genre): ?>
                     <option value="<?php echo $genre['id']; ?>" 
@@ -240,27 +240,27 @@ $genres = $stmt->fetchAll();
                         <?php echo h($genre['name']); ?>
                     </option>
                     <?php endforeach; ?>
-                    <option value="other" <?php echo (isset($_POST['genres']) && in_array('other', $_POST['genres'])) ? 'selected' : ''; ?>>Other (Diğer)</option>
+                    <option value="other" <?php echo (isset($_POST['genres']) && in_array('other', $_POST['genres'])) ? 'selected' : ''; ?>>Other</option>
                 </select>
-                <div class="form-text">Tür arayabilir ve birden fazla seçebilirsiniz. "Other" seçeneği ile yeni tür girebilirsiniz.</div>
-                <input type="text" class="form-control mt-2" id="other_genre_input" name="other_genre" placeholder="Diğer türü yazınız..." style="display:<?php echo (isset($_POST['genres']) && in_array('other', $_POST['genres'])) ? 'block' : 'none'; ?>;" value="<?php echo isset($_POST['other_genre']) ? h($_POST['other_genre']) : ''; ?>">
+                <div class="form-text">You can search for genres and select multiple. Use "Other" option to enter a new genre.</div>
+                <input type="text" class="form-control mt-2" id="other_genre_input" name="other_genre" placeholder="Enter other genre..." style="display:<?php echo (isset($_POST['genres']) && in_array('other', $_POST['genres'])) ? 'block' : 'none'; ?>;" value="<?php echo isset($_POST['other_genre']) ? h($_POST['other_genre']) : ''; ?>">
             </div>
             
             <div class="mb-3">
-                <label for="description" class="form-label">Açıklama</label>
+                <label for="description" class="form-label">Description</label>
                 <textarea class="form-control" id="description" name="description" rows="3"><?php 
                     echo isset($_POST['description']) ? h($_POST['description']) : ''; 
                 ?></textarea>
             </div>
             
             <div class="mb-3">
-                <label for="rating" class="form-label">Puan (1-10)</label>
+                <label for="rating" class="form-label">Rating (1-10)</label>
                 <input type="number" class="form-control" id="rating" name="rating" min="1" max="10" step="0.1"
                        value="<?php echo isset($_POST['rating']) ? h($_POST['rating']) : ''; ?>">
-                <div class="invalid-feedback">Puan 1-10 arasında olmalıdır.</div>
+                <div class="invalid-feedback">Rating must be between 1-10.</div>
             </div>
             
-            <button type="submit" class="btn btn-primary w-100">Albümü Yükle</button>
+            <button type="submit" class="btn btn-primary w-100">Upload Album</button>
         </form>
     </div>
 </div>
@@ -300,7 +300,7 @@ function toggleOtherGenre() {
 // Select2 başlat
 $(document).ready(function() {
     $('#genres').select2({
-        placeholder: 'Tür seçin',
+        placeholder: 'Select genres',
         allowClear: true,
         width: '100%'
     });

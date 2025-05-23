@@ -14,19 +14,19 @@ if (!isLoggedIn()) {
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="mb-0">Profil Fotoğrafı Yükle</h4>
+                    <h4 class="mb-0">Upload Profile Picture</h4>
                 </div>
                 <div class="card-body">
                     <form id="profilePictureForm" enctype="multipart/form-data">
                         <div class="mb-3">
-                            <label for="profilePicture" class="form-label">Profil Fotoğrafı Seç</label>
+                            <label for="profilePicture" class="form-label">Select Profile Picture</label>
                             <input type="file" class="form-control" id="profilePicture" name="profile" accept="image/*" required>
-                            <div class="form-text">İzin verilen formatlar: JPG, PNG, GIF. Maksimum dosya boyutu: 5MB</div>
+                            <div class="form-text">Allowed formats: JPG, PNG, GIF. Maximum file size: 5MB</div>
                         </div>
                         <div class="mb-3">
-                            <img id="preview" src="#" alt="Profil fotoğrafı önizleme" style="max-width: 200px; display: none;" class="img-thumbnail">
+                            <img id="preview" src="#" alt="Profile picture preview" style="max-width: 200px; display: none;" class="img-thumbnail">
                         </div>
-                        <button type="submit" class="btn btn-primary">Yükle</button>
+                        <button type="submit" class="btn btn-primary">Upload</button>
                     </form>
                     <div id="message" class="mt-3"></div>
                 </div>
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('action', 'upload_profile');
         formData.append('profile', fileInput.files[0]);
 
-        message.innerHTML = '<div class="alert alert-info">Yükleniyor...</div>';
+        message.innerHTML = '<div class="alert alert-info">Uploading...</div>';
 
         fetch('upload.php', {
             method: 'POST',
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            message.innerHTML = '<div class="alert alert-danger">Bir hata oluştu. Lütfen tekrar deneyin.</div>';
+            message.innerHTML = '<div class="alert alert-danger">An error occurred. Please try again.</div>';
             console.error('Error:', error);
         });
     });

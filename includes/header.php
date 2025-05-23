@@ -37,7 +37,7 @@ $currentUserId = $_SESSION['user_id'] ?? null;
                                 <li><a href="index.php">Home</a></li>
                                 <li><a href="albums-store.php">Discover</a></li>
                                 <?php if ($isLoggedIn): ?>
-                                <li><a href="album-upload.php">Albüm Yükle</a></li>
+                                <li><a href="album-upload.php">Upload Album</a></li>
                                 <?php endif; ?>
                             </ul>
                             <div class="login-register-cart-button d-flex align-items-center">

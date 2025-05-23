@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Albüm Detay - AlbumRanker</title>
+    <title>Album Detail - AlbumRanker</title>
     <link rel="icon" href="img/core-img/favicon.ico">
     <link rel="stylesheet" href="style.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -15,7 +15,7 @@ require_once 'includes/header.php';
 
 $album_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if (!$album_id) {
-    echo '<div class="container mt-5"><div class="alert alert-danger">Albüm bulunamadı.</div></div>';
+    echo '<div class="container mt-5"><div class="alert alert-danger">Album not found.</div></div>';
     require_once 'includes/footer.php';
     exit;
 }
@@ -30,7 +30,7 @@ $stmt = $conn->prepare("
 $stmt->execute([$album_id]);
 $album = $stmt->fetch();
 if (!$album) {
-    echo '<div class="container mt-5"><div class="alert alert-danger">Albüm bulunamadı.</div></div>';
+    echo '<div class="container mt-5"><div class="alert alert-danger">Album not found.</div></div>';
     require_once 'includes/footer.php';
     exit;
 }
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
     $stmt->execute([$_SESSION['user_id'], $album_id]);
     $user_review_count = $stmt->fetchColumn();
     if ($user_review_count >= 5) {
-        $error = "Bir albüme en fazla 5 yorum ekleyebilirsiniz.";
+        $error = "You can add a maximum of 5 reviews per album.";
     } else {
         $content = trim($_POST['content'] ?? '');
         $rating = isset($_POST['rating']) ? (float)$_POST['rating'] : null;
@@ -88,8 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
                 exit;
             } catch (PDOException $e) {
                 $conn->rollBack();
-                error_log("Yorum eklenirken hata: " . $e->getMessage());
-                $error = "Yorum eklenirken bir hata oluştu.";
+                error_log("Error while adding review: " . $e->getMessage());
+                $error = "An error occurred while adding the review.";
             }
         }
     }
@@ -131,14 +131,14 @@ $rating_count = $rating_stats ? $rating_stats['rating_count'] : 0;
         <div class="row justify-content-center">
             <div class="col-12 col-md-8">
                 <div class="text-center p-4 bg-white bg-opacity-75 rounded shadow" style="margin-top: 60px;">
-                    <span class="text-muted">Albüm Detay</span>
+                    <span class="text-muted">Album Detail</span>
                     <h2 class="display-5 fw-bold mb-0"><?php echo h($album['title']); ?> <small class="text-muted" style="font-size:0.6em;">- <?php echo h($album['artist']); ?></small></h2>
                     <?php if (isLoggedIn()): ?>
                         <form method="post" class="d-inline">
                             <?php if ($is_favorited): ?>
-                                <button type="submit" name="favorite_action" value="remove" class="btn btn-danger btn-sm ms-2"><i class="fas fa-heart-broken"></i> Favorilerden Çıkar</button>
+                                <button type="submit" name="favorite_action" value="remove" class="btn btn-danger btn-sm ms-2"><i class="fas fa-heart-broken"></i> Remove from Favorites</button>
                             <?php else: ?>
-                                <button type="submit" name="favorite_action" value="add" class="btn btn-outline-danger btn-sm ms-2"><i class="fas fa-heart"></i> Favorilere Ekle</button>
+                                <button type="submit" name="favorite_action" value="add" class="btn btn-outline-danger btn-sm ms-2"><i class="fas fa-heart"></i> Add to Favorites</button>
                             <?php endif; ?>
                         </form>
                     <?php endif; ?>
@@ -174,9 +174,9 @@ $rating_count = $rating_stats ? $rating_stats['rating_count'] : 0;
                                 </span>
                             </div>
                             <?php endif; ?>
-                            <p class="mb-1"><strong>Yükleyen:</strong> <a href="profile.php?user=<?php echo $album['user_id']; ?>"><?php echo h($album['username']); ?></a></p>
-                            <p class="mb-1"><strong>Çıkış Tarihi:</strong> <?php echo h($album['release_date']); ?></p>
-                            <p class="mb-1"><strong>Türler:</strong> <?php
+                            <p class="mb-1"><strong>Uploaded by:</strong> <a href="profile.php?user=<?php echo $album['user_id']; ?>"><?php echo h($album['username']); ?></a></p>
+                            <p class="mb-1"><strong>Release Date:</strong> <?php echo h($album['release_date']); ?></p>
+                            <p class="mb-1"><strong>Genres:</strong> <?php
                                 $stmt = $conn->prepare("SELECT g.name FROM album_genres ag JOIN genres g ON ag.genre_id = g.id WHERE ag.album_id = ?");
                                 $stmt->execute([$album_id]);
                                 $genres = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -195,18 +195,18 @@ $rating_count = $rating_stats ? $rating_stats['rating_count'] : 0;
                     <small>(<?php echo $rating_count; ?>)</small>
                 </span>
                 <div class="card-header bg-primary text-white">
-                    <a href="profile.php?user=<?php echo $album['user_id']; ?>" class="text-white fw-bold"><?php echo h($album['username']); ?></a> (Albümü yükleyen)
+                    <a href="profile.php?user=<?php echo $album['user_id']; ?>" class="text-white fw-bold"><?php echo h($album['username']); ?></a> (Album uploader)
                 </div>
                 <div class="card-body">
                     <?php if ($first_review): ?>
-                        <p class="mb-1"><strong>Puan:</strong> <?php echo h($first_review['rating']); ?>/10</p>
+                        <p class="mb-1"><strong>Rating:</strong> <?php echo h($first_review['rating']); ?>/10</p>
                     <?php endif; ?>
                     <p class="mb-0"><?php echo nl2br(h($album['description'])); ?></p>
                 </div>
             </div>
 
             <!-- Diğer Yorumlar -->
-            <h4 class="mb-3">Yorumlar</h4>
+            <h4 class="mb-3">Reviews</h4>
             <?php if ($other_reviews): ?>
                 <?php foreach ($other_reviews as $review): ?>
                     <div class="card mb-2 shadow-sm">
@@ -222,38 +222,38 @@ $rating_count = $rating_stats ? $rating_stats['rating_count'] : 0;
                             $stmt->execute([$review['user_id'], $album_id]);
                             $user_rating = $stmt->fetchColumn();
                             if ($user_rating): ?>
-                                <p class="mb-0"><strong>Puan:</strong> <?php echo h($user_rating); ?>/10</p>
+                                <p class="mb-0"><strong>Rating:</strong> <?php echo h($user_rating); ?>/10</p>
                             <?php endif; ?>
                             <!-- Beğeni butonu (dummy) -->
-                            <button class="btn btn-outline-success btn-sm mt-2" disabled>Beğen (<span>0</span>)</button>
+                            <button class="btn btn-outline-success btn-sm mt-2" disabled>Like (<span>0</span>)</button>
                         </div>
                     </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <div class="alert alert-secondary">Henüz yorum yok. İlk yorumu sen bırak!</div>
+                <div class="alert alert-secondary">No reviews yet. Be the first to review!</div>
             <?php endif; ?>
 
             <!-- Yorum Ekleme Formu -->
             <?php if (isLoggedIn()): ?>
                 <div class="card mt-4 shadow-sm">
-                    <div class="card-header">Yorum Ekle</div>
+                    <div class="card-header">Add Review</div>
                     <div class="card-body">
                         <?php if (!empty($error)): ?>
                             <div class="alert alert-danger mb-3"><?php echo h($error); ?></div>
                         <?php endif; ?>
                         <form action="album-detail.php?id=<?php echo $album_id; ?>" method="post">
                             <div class="mb-2">
-                                <textarea name="content" class="form-control" placeholder="Yorumunuzu yazın..." required></textarea>
+                                <textarea name="content" class="form-control" placeholder="Write your review..." required></textarea>
                             </div>
                             <div class="mb-2">
-                                <input type="number" name="rating" min="1" max="10" step="0.1" class="form-control" placeholder="Puan (1-10, ör: 8.5)" required>
+                                <input type="number" name="rating" min="1" max="10" step="0.1" class="form-control" placeholder="Rating (1-10, e.g: 8.5)" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">Yorum Ekle</button>
+                            <button type="submit" class="btn btn-primary">Add Review</button>
                         </form>
                     </div>
                 </div>
             <?php else: ?>
-                <div class="alert alert-info mt-4">Yorum eklemek için <a href="login.php">giriş yap</a>!</div>
+                <div class="alert alert-info mt-4">Please <a href="login.php">login</a> to add a review!</div>
             <?php endif; ?>
         </div>
     </div>
