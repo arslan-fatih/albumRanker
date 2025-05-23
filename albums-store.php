@@ -194,6 +194,11 @@
                 ?>
             </div>
         <?php else: ?>
+            <div class="row">
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted" style="font-size:1.2rem;">No results yet.</p>
+                </div>
+            </div>
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                 <!-- Buraya dinamik albüm kartları gelecek (varsayılan liste) -->
             </div>

@@ -357,7 +357,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
         <div class="container">
             <div class="row d-flex flex-wrap align-items-center">
                 <div class="col-12 col-md-6">
-                    <a href="#"><img src="img/core-img/logo.png" alt=""></a>
+                    <a href="#"><span style="font-size:1.5rem;font-weight:bold;color:#fff;letter-spacing:2px;">AlbumRanker</span></a>
                     <p class="copywrite-text"><a href="#">Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | AlbumRanker</a></p>
                 </div>
                 <div class="col-12 col-md-6">
