@@ -55,6 +55,37 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
     <title>AlbumRanker - User Profile</title>
     <link rel="icon" href="img/core-img/favicon.ico">
     <link rel="stylesheet" href="style.css">
+    <style>
+    .delete-album-btn-custom {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        cursor: pointer;
+        transition: box-shadow 0.2s;
+        z-index: 2;
+        padding: 0;
+    }
+    .delete-album-btn-custom i {
+        color: #888;
+        font-size: 18px;
+        transition: color 0.2s;
+    }
+    .delete-album-btn-custom:hover {
+        box-shadow: 0 4px 16px rgba(255,0,0,0.10);
+    }
+    .delete-album-btn-custom:hover i {
+        color: #e74c3c;
+    }
+    </style>
 </head>
 <body>
     <div class="preloader d-flex align-items-center justify-content-center">
@@ -192,7 +223,12 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                         foreach ($albums as $album) {
                                     ?>
                                     <div class="col-12 col-md-6 col-lg-4 mb-4">
-                                        <div class="card h-100 shadow-sm">
+                                        <div class="card h-100 shadow-sm position-relative">
+                                            <?php if ($isOwnProfile) { ?>
+                                                <button class="delete-album-btn-custom" data-album-id="<?php echo $album['id']; ?>" title="Delete">
+                                                    <i class="icon-trash"></i>
+                                                </button>
+                                            <?php } ?>
                                             <a href="album-detail.php?id=<?php echo $album['id']; ?>">
                                                 <img src="<?php echo htmlspecialchars(getAlbumCover($album['cover_image'])); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($album['title']); ?>" style="height: 220px; object-fit: cover;">
                                             </a>
@@ -426,7 +462,38 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                 message.innerHTML = '<div class="alert alert-danger">Bir hata oluştu. Lütfen tekrar deneyin.</div>';
             });
         });
+
+        let albumToDelete = null;
+        document.querySelectorAll('.delete-album-btn-custom').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                albumToDelete = this.getAttribute('data-album-id');
+                var modal = new bootstrap.Modal(document.getElementById('deleteAlbumModal'));
+                modal.show();
+            });
+        });
+        document.getElementById('confirmDeleteAlbumBtn').addEventListener('click', function() {
+            if (albumToDelete) {
+                window.location.href = 'delete-album.php?id=' + albumToDelete;
+            }
+        });
     });
     </script>
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteAlbumModal" tabindex="-1" aria-labelledby="deleteAlbumModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header border-0">
+            <h5 class="modal-title w-100 text-center" id="deleteAlbumModalLabel">Delete Album</h5>
+          </div>
+          <div class="modal-body text-center">
+            Are you sure you want to delete this album?
+          </div>
+          <div class="modal-footer justify-content-center border-0">
+            <button type="button" class="btn btn-danger" id="confirmDeleteAlbumBtn">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
 </body>
 </html> 
