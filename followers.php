@@ -73,7 +73,7 @@ $users = $stmt->fetchAll();
                     <div class="col">
                         <div class="card h-100 shadow-sm">
                             <div class="card-body text-center">
-                                <img src="<?php echo htmlspecialchars($user['profile_pic'] ?? 'img/core-img/default.jpg'); ?>" 
+                                <img src="<?php echo htmlspecialchars($user['profile_pic'] && $user['profile_pic'] !== 'default.jpg' ? 'uploads/profile/' . $user['profile_pic'] : 'img/core-img/default.jpg'); ?>" 
                                      class="rounded-circle mb-3" 
                                      alt="<?php echo htmlspecialchars($user['username']); ?>"
                                      style="width: 100px; height: 100px; object-fit: cover;">

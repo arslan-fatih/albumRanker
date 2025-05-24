@@ -130,7 +130,7 @@
                             ?>
                             <div class="col">
                                 <div class="card h-100 shadow-sm text-center">
-                                    <img src="<?php echo htmlspecialchars($user['profile_pic'] ?? 'img/core-img/default.jpg'); ?>" class="rounded-circle mx-auto mt-3" alt="Profile" style="width:100px;height:100px;object-fit:cover;">
+                                    <img src="<?php echo htmlspecialchars($user['profile_pic'] && $user['profile_pic'] !== 'default.jpg' ? 'uploads/profile/' . $user['profile_pic'] : 'img/core-img/default.jpg'); ?>" class="rounded-circle mx-auto mt-3" alt="Profile" style="width:100px;height:100px;object-fit:cover;">
                                     <div class="card-body">
                                         <h5 class="card-title"><?php echo htmlspecialchars($user['username']); ?></h5>
                                         <p class="card-text text-muted"><?php echo htmlspecialchars($user['bio'] ?? ''); ?></p>
