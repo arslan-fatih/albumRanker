@@ -80,4 +80,8 @@ function checkRateLimit($key, $limit = 60, $period = 60) {
     $_SESSION['rate_limit'][$key]['count']++;
     return true;
 }
+
+// Eğer yoksa, aşağıdaki SQL'i veritabanında çalıştır:
+// ALTER TABLE albums DROP FOREIGN KEY albums_ibfk_1;
+// ALTER TABLE albums ADD CONSTRAINT albums_ibfk_1 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 ?> 

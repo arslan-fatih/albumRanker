@@ -1,4 +1,3 @@
-
 DROP DATABASE IF EXISTS album_ranker;
 CREATE DATABASE album_ranker;
 USE album_ranker;
@@ -172,7 +171,7 @@ INSERT INTO `genres` (`id`, `name`) VALUES
 (5241, 'Chamber Music'),
 (5391, 'Chant'),
 (5221, 'Chicago Blues'),
-(5370, 'Children’s Music'),
+(5370, 'Children's Music'),
 (5256, 'Chillstep'),
 (5242, 'Choral'),
 (5369, 'Christian'),
@@ -581,7 +580,7 @@ ALTER TABLE `users`
 -- Tablo kısıtlamaları `albums`
 --
 ALTER TABLE `albums`
-  ADD CONSTRAINT `albums_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `albums_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Tablo kısıtlamaları `album_genres`

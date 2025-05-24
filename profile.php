@@ -140,7 +140,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                 <div class="col-12 col-lg-4">
                     <div class="profile-info">
                         <div class="profile-pic text-center mb-30">
-                            <img id="profilePic" src="<?php echo htmlspecialchars($user['profile_pic'] ?: 'img/bg-img/profile-pic.jpg'); ?>" alt="Profile Picture" class="rounded-circle" style="width: 200px; height: 200px; object-fit: cover;">
+                            <img id="profilePic" src="<?php echo htmlspecialchars($user['profile_pic'] && $user['profile_pic'] !== 'default.jpg' ? 'uploads/profile/' . $user['profile_pic'] : 'img/core-img/default.jpg'); ?>" alt="Profile Picture" class="rounded-circle" style="width: 200px; height: 200px; object-fit: cover;">
                             <?php if (isset(
                                 $isOwnProfile
                             ) && $isOwnProfile): ?>
@@ -455,7 +455,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        document.getElementById('profilePic').src = 'img/bg-img/profile-pic.jpg?t=' + Date.now();
+                        document.getElementById('profilePic').src = 'img/core-img/default.jpg';
                         modal.hide();
                     } else {
                         alert(data.message);
