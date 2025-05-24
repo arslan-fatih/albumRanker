@@ -1982,3 +1982,8 @@ img {
 /* ====== The End ====== */
 
 /*# sourceMappingURL=style.css.map */
+
+.footer-area, .footer-area .copywrite-text {
+    border-bottom: none !important;
+    box-shadow: none !important;
+}

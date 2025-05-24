@@ -133,6 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
 </div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 function toggleOtherGenre() {
@@ -143,6 +144,7 @@ function toggleOtherGenre() {
         otherInput.style.display = 'block';
     } else {
         otherInput.style.display = 'none';
+        otherInput.value = '';
     }
 }
 document.addEventListener('DOMContentLoaded', function() {

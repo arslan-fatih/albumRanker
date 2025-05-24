@@ -400,18 +400,19 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
         const fileInput = document.getElementById('profilePicture');
         const message = document.getElementById('profilePicMessage');
         const profilePic = document.getElementById('profilePic');
-        // Modal kapandığında formu ve mesajı sıfırla
-        document.getElementById('profilePicModal').addEventListener('hidden.bs.modal', function () {
-            if (form) {
-                form.style.display = 'none';
-                form.reset();
-            }
-            if (message) message.innerHTML = '';
-        });
+        const profilePicModal = document.getElementById('profilePicModal');
+        if (profilePicModal) {
+            profilePicModal.addEventListener('hidden.bs.modal', function () {
+                if (form) {
+                    form.style.display = 'none';
+                    form.reset();
+                }
+                if (message) message.innerHTML = '';
+            });
+        }
         // Takip Et / Takipten Çık butonu
-        var followBtn = document.querySelector('.follow-btn');
-        if (followBtn) {
-            followBtn.addEventListener('click', function() {
+        document.querySelectorAll('.follow-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
                 var userId = this.getAttribute('data-user-id');
                 var button = this;
                 fetch('follow.php', {
@@ -429,7 +430,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                 })
                 .catch(() => alert('Bir hata oluştu.'));
             });
-        }
+        });
 
         const editBtn = document.getElementById('editProfilePicBtn');
         const modal = new bootstrap.Modal(document.getElementById('profilePicModal'));
@@ -514,22 +515,27 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
         });
 
         let albumToDelete = null;
-        document.querySelectorAll('.delete-album-btn-custom').forEach(function(btn) {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                albumToDelete = this.getAttribute('data-album-id');
-                var modal = new bootstrap.Modal(document.getElementById('deleteAlbumModal'));
-                modal.show();
+        const deleteAlbumModal = document.getElementById('deleteAlbumModal');
+        const confirmDeleteAlbumBtn = document.getElementById('confirmDeleteAlbumBtn');
+        if (deleteAlbumModal && confirmDeleteAlbumBtn) {
+            document.querySelectorAll('.delete-album-btn-custom').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    albumToDelete = this.getAttribute('data-album-id');
+                    var modal = new bootstrap.Modal(deleteAlbumModal);
+                    modal.show();
+                });
             });
-        });
-        document.getElementById('confirmDeleteAlbumBtn').addEventListener('click', function() {
-            if (albumToDelete) {
-                window.location.href = 'delete-album.php?id=' + albumToDelete;
-            }
-        });
+            confirmDeleteAlbumBtn.addEventListener('click', function() {
+                if (albumToDelete) {
+                    window.location.href = 'delete-album.php?id=' + albumToDelete;
+                }
+            });
+        }
     });
     </script>
     <!-- Delete Confirmation Modal -->
+    <?php if ($isOwnProfile): ?>
     <div class="modal fade" id="deleteAlbumModal" tabindex="-1" aria-labelledby="deleteAlbumModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -545,5 +551,6 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
         </div>
       </div>
     </div>
+    <?php endif; ?>
 </body>
 </html> 
