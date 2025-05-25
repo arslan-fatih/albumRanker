@@ -16,7 +16,6 @@ require_once 'includes/header.php';
 $album_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if (!$album_id) {
     echo '<div class="container mt-5"><div class="alert alert-danger">Album not found.</div></div>';
-    require_once 'includes/footer.php';
     exit;
 }
 
@@ -31,7 +30,6 @@ $stmt->execute([$album_id]);
 $album = $stmt->fetch();
 if (!$album) {
     echo '<div class="container mt-5"><div class="alert alert-danger">Album not found.</div></div>';
-    require_once 'includes/footer.php';
     exit;
 }
 
@@ -471,6 +469,14 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 .edit-album-btn-custom:hover i {
     color: #3498db;
+}
+
+/* Albüm fotoğrafı için sabit boyut */
+.col-md-4 img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    object-position: center;
 }
 </style>
 

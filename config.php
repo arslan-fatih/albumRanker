@@ -58,6 +58,7 @@ foreach ($uploadDirs as $dir) {
 
 // Load Helper Functions
 require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/validation.php';
 
 // CSRF Protection
 if (!isset($_SESSION['csrf_token'])) {

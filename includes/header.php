@@ -58,4 +58,8 @@ $currentUserId = $_SESSION['user_id'] ?? null;
         </div>
     </div>
 </header>
-<!-- Header Area End --> 
+<!-- Header Area End -->
+<title><?php echo isset($pageTitle) ? h($pageTitle) : 'AlbumRanker'; ?></title>
+<link rel="icon" href="img/core-img/favicon.ico">
+<link rel="stylesheet" href="css/dist/style.min.css">
+<script src="js/dist/main.min.js" defer></script> 
