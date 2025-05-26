@@ -13,25 +13,31 @@ if (!isset($_SESSION['csrf_token'])) {
 $isLoggedIn = isset($_SESSION['user_id']);
 $currentUserId = $_SESSION['user_id'] ?? null;
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo isset($pageTitle) ? h($pageTitle) : 'AlbumRanker'; ?></title>
+    <link rel="icon" href="img/core-img/favicon.ico">
+    <link rel="stylesheet" href="style.css">
+    <script src="js/main.js" defer></script>
+</head>
+<body>
 <!-- Header Area -->
 <header class="header-area">
     <div class="oneMusic-main-menu">
         <div class="classy-nav-container breakpoint-off">
             <div class="container">
                 <nav class="classy-navbar justify-content-between" id="oneMusicNav">
-                    <!-- Nav brand -->
                     <a href="index.php" class="nav-brand"><span style="font-size:2rem;font-weight:bold;color:#fff;letter-spacing:2px;">AlbumRanker</span></a>
-                    <!-- Navbar Toggler -->
                     <div class="classy-navbar-toggler">
                         <span class="navbarToggler"><span></span><span></span><span></span></span>
                     </div>
-                    <!-- Menu -->
                     <div class="classy-menu">
-                        <!-- Close Button -->
                         <div class="classycloseIcon">
                             <div class="cross-wrap"><span class="top"></span><span class="bottom"></span></div>
                         </div>
-                        <!-- Nav Start -->
                         <div class="classynav">
                             <ul>
                                 <li><a href="index.php">Home</a></li>
@@ -44,22 +50,17 @@ $currentUserId = $_SESSION['user_id'] ?? null;
                                 <div class="login-register-btn mr-50" id="userMenu">
                                     <?php if ($isLoggedIn): ?>
                                         <a href="profile.php" class="btn btn-primary">My Profile</a>
-                                        <a href="logout.php" class="btn btn-outline-primary ml-2">Logout</a>
+                                        <a href="#" onclick="handleLogout(event)" class="btn btn-outline-primary ml-2">Logout</a>
                                     <?php else: ?>
                                         <a href="login.php" class="btn btn-primary">Login / Register</a>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </div>
-                        <!-- Nav End -->
                     </div>
                 </nav>
             </div>
         </div>
     </div>
 </header>
-<!-- Header Area End -->
-<title><?php echo isset($pageTitle) ? h($pageTitle) : 'AlbumRanker'; ?></title>
-<link rel="icon" href="img/core-img/favicon.ico">
-<link rel="stylesheet" href="style.css">
-<script src="js/main.js" defer></script> 
+<!-- Header Area End --> 

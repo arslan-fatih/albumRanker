@@ -381,9 +381,17 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                         foreach ($followed as $f) {
                                     ?>
                                     <li class="list-group-item d-flex align-items-center">
-                                        <img src="<?php echo htmlspecialchars($f['profile_pic'] && $f['profile_pic'] !== 'default.jpg' ? 'uploads/profile/' . $f['profile_pic'] : 'img/core-img/default.jpg'); ?>" class="rounded-circle me-2" alt="Profil" style="width:32px;height:32px;object-fit:cover;">
-                                        <a href="profile.php?user=<?php echo $f['id']; ?>" class="text-decoration-none"><?php echo htmlspecialchars($f['username']); ?></a>
-                                    </li>
+<?php
+$profilePicPath = 'uploads/profile/' . $f['profile_pic'];
+if ($f['profile_pic'] && $f['profile_pic'] !== 'default.jpg' && file_exists($profilePicPath)) {
+    $imgSrc = $profilePicPath;
+} else {
+    $imgSrc = 'img/core-img/default.jpg';
+}
+?>
+<img src="<?php echo htmlspecialchars($imgSrc); ?>" class="rounded-circle me-2" alt="Profil" style="width:32px;height:32px;object-fit:cover;">
+<a href="profile.php?user=<?php echo $f['id']; ?>" class="text-decoration-none"><?php echo htmlspecialchars($f['username']); ?></a>
+</li>
                                     <?php }} else { echo '<li class="list-group-item text-center">No following.</li>'; } ?>
                                 </ul>
                             </div>

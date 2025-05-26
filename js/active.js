@@ -1,25 +1,25 @@
 (function ($) {
     'use strict';
 
-    var browserWindow = $(window);
+    const browserWindow = $(window);
 
-    // :: 1.0 Preloader Animation
-    browserWindow.on('load', function () {
-        $('.preloader').fadeOut('slow', function () {
+    // Preloader Animation
+    browserWindow.on('load', () => {
+        $('.preloader').fadeOut('slow', function() {
             $(this).remove();
         });
     });
 
-    // :: 2.0 Navigation Menu
+    // Navigation Menu
     if ($.fn.classyNav) {
         $('#oneMusicNav').classyNav();
     }
 
-    // :: 3.0 Carousel Sliders
+    // Carousel Sliders
     if ($.fn.owlCarousel) {
-        var welcomeSlide = $('.hero-slides');
-        var testimonials = $('.testimonials-slide');
-        var albumSlides = $('.albums-slideshow');
+        const welcomeSlide = $('.hero-slides');
+        const testimonials = $('.testimonials-slide');
+        const albumSlides = $('.albums-slideshow');
 
         // Hero Section Slider
         welcomeSlide.owlCarousel({
@@ -36,34 +36,30 @@
         });
 
         // Animation handling for slider transitions
-        welcomeSlide.on('translate.owl.carousel', function () {
-            var slideLayer = $("[data-animation]");
-            slideLayer.each(function () {
-                var anim_name = $(this).data('animation');
+        welcomeSlide.on('translate.owl.carousel', () => {
+            $("[data-animation]").each(function() {
+                const anim_name = $(this).data('animation');
                 $(this).removeClass('animated ' + anim_name).css('opacity', '0');
             });
         });
 
-        welcomeSlide.on('translated.owl.carousel', function () {
-            var slideLayer = welcomeSlide.find('.owl-item.active').find("[data-animation]");
-            slideLayer.each(function () {
-                var anim_name = $(this).data('animation');
+        welcomeSlide.on('translated.owl.carousel', () => {
+            welcomeSlide.find('.owl-item.active').find("[data-animation]").each(function() {
+                const anim_name = $(this).data('animation');
                 $(this).addClass('animated ' + anim_name).css('opacity', '1');
             });
         });
 
-        // Animation delay settings
-        $("[data-delay]").each(function () {
-            var anim_del = $(this).data('delay');
-            $(this).css('animation-delay', anim_del);
+        // Animation settings
+        $("[data-delay]").each(function() {
+            $(this).css('animation-delay', $(this).data('delay'));
         });
 
-        // Animation duration settings
-        $("[data-duration]").each(function () {
-            var anim_dur = $(this).data('duration');
-            $(this).css('animation-duration', anim_dur);
+        $("[data-duration]").each(function() {
+            $(this).css('animation-duration', $(this).data('duration'));
         });
 
+        // Testimonials Slider
         testimonials.owlCarousel({
             items: 1,
             margin: 0,
@@ -72,6 +68,7 @@
             autoplay: true
         });
 
+        // Album Slideshow
         albumSlides.owlCarousel({
             items: 5,
             margin: 30,
@@ -83,47 +80,33 @@
             autoplayTimeout: 5000,
             smartSpeed: 750,
             responsive: {
-                0: {
-                    items: 1
-                },
-                480: {
-                    items: 2
-                },
-                768: {
-                    items: 3
-                },
-                992: {
-                    items: 4
-                },
-                1200: {
-                    items: 5
-                }
+                0: { items: 1 },
+                480: { items: 2 },
+                768: { items: 3 },
+                992: { items: 4 },
+                1200: { items: 5 }
             }
         });
     }
 
-    // :: 4.0 Masonary Gallery Active Code
+    // Masonry Gallery
     if ($.fn.imagesLoaded) {
-        $('.oneMusic-albums').imagesLoaded(function () {
-            // filter items on button click
-            $('.catagory-menu').on('click', 'a', function () {
-                var filterValue = $(this).attr('data-filter');
-                $grid.isotope({
-                    filter: filterValue
-                });
-            });
-            // init Isotope
-            var $grid = $('.oneMusic-albums').isotope({
+        $('.oneMusic-albums').imagesLoaded(() => {
+            const $grid = $('.oneMusic-albums').isotope({
                 itemSelector: '.single-album-item',
                 percentPosition: true,
                 masonry: {
                     columnWidth: '.single-album-item'
                 }
             });
+
+            $('.catagory-menu').on('click', 'a', function() {
+                $grid.isotope({ filter: $(this).attr('data-filter') });
+            });
         });
     }
 
-    // :: 5.0 Video Active Code
+    // Video Popup
     if ($.fn.magnificPopup) {
         $('.video--play--btn').magnificPopup({
             disableOn: 0,
@@ -135,7 +118,7 @@
         });
     }
 
-    // :: 6.0 ScrollUp Button
+    // ScrollUp Button
     if ($.fn.scrollUp) {
         browserWindow.scrollUp({
             scrollSpeed: 1500,
@@ -143,7 +126,7 @@
         });
     }
 
-    // :: 7.0 Counter Animation
+    // Counter Animation
     if ($.fn.counterUp) {
         $('.counter').counterUp({
             delay: 10,
@@ -151,69 +134,50 @@
         });
     }
 
-    // :: 8.0 Sticky Navigation
+    // Sticky Navigation
     if ($.fn.sticky) {
         $(".oneMusic-main-menu").sticky({
             topSpacing: 0
         });
     }
 
-    // :: 9.0 Progress Bar Animation
+    // Progress Bar Animation
     if ($.fn.circleProgress) {
-        $('#circle').circleProgress({
+        const circleConfig = {
             size: 160,
             emptyFill: "rgba(0, 0, 0, .0)",
             fill: '#000000',
             thickness: '3',
             reverse: true
-        });
-        $('#circle2').circleProgress({
-            size: 160,
-            emptyFill: "rgba(0, 0, 0, .0)",
-            fill: '#000000',
-            thickness: '3',
-            reverse: true
-        });
-        $('#circle3').circleProgress({
-            size: 160,
-            emptyFill: "rgba(0, 0, 0, .0)",
-            fill: '#000000',
-            thickness: '3',
-            reverse: true
-        });
-        $('#circle4').circleProgress({
-            size: 160,
-            emptyFill: "rgba(0, 0, 0, .0)",
-            fill: '#000000',
-            thickness: '3',
-            reverse: true
+        };
+
+        ['#circle', '#circle2', '#circle3', '#circle4'].forEach(id => {
+            $(id).circleProgress(circleConfig);
         });
     }
 
-    // :: 10.0 Audio Player
+    // Audio Player
     if ($.fn.audioPlayer) {
         $('audio').audioPlayer();
     }
 
-    // :: 11.0 Tooltip Initialization
+    // Tooltip Initialization
     if ($.fn.tooltip) {
-        $('[data-toggle="tooltip"]').tooltip()
+        $('[data-toggle="tooltip"]').tooltip();
     }
 
-    // :: 12.0 Prevent Default Anchor Click
-    $('a[href="#"]').on('click', function ($) {
-        $.preventDefault();
-    });
+    // Prevent Default Anchor Click
+    $('a[href="#"]').on('click', e => e.preventDefault());
 
-    // :: 13.0 WOW Animation
+    // WOW Animation
     if (browserWindow.width() > 767) {
         new WOW().init();
     }
     
-    // :: 14.0 Category Menu Active State
-    $('.catagory-menu a').on('click', function () {
+    // Category Menu Active State
+    $('.catagory-menu a').on('click', function() {
         $('.catagory-menu a').removeClass('active');
         $(this).addClass('active');
-    })
+    });
 
 })(jQuery);

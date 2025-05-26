@@ -41,7 +41,7 @@
                     <nav class="classy-navbar justify-content-between" id="oneMusicNav">
 
                         <!-- Nav brand -->
-                        <a href="index.html" class="nav-brand"><img src="img/core-img/logo.png" alt=""></a>
+                        <a href="index.php" class="nav-brand"><span style="font-size:2rem;font-weight:bold;color:#fff;letter-spacing:2px;">AlbumRanker</span></a>
 
                         <!-- Navbar Toggler -->
                         <div class="classy-navbar-toggler">
@@ -61,7 +61,6 @@
                                 <ul>
                                     <li><a href="index.php">Home</a></li>
                                     <li><a href="albums-store.php">Discover</a></li>
-                                    <li><a href="messages.php">Messages</a></li>
                                 </ul>
                                 <div class="login-register-cart-button d-flex align-items-center">
                                     <div class="login-register-btn mr-50" id="userMenu">
@@ -150,7 +149,7 @@
         <div class="container">
             <div class="row d-flex flex-wrap align-items-center">
                 <div class="col-12 col-md-6">
-                    <a href="#"><img src="img/core-img/logo.png" alt=""></a>
+                    <a href="index.php"><span style="font-size:1.5rem;font-weight:bold;color:#fff;letter-spacing:2px;">AlbumRanker</span></a>
                     <p class="copywrite-text"><a href="#">Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | AlbumRanker</a></p>
                 </div>
 
@@ -159,7 +158,6 @@
                         <ul>
                             <li><a href="index.php">Home</a></li>
                             <li><a href="albums-store.php">Discover</a></li>
-                            <li><a href="messages.php">Messages</a></li>
                         </ul>
                     </div>
                 </div>

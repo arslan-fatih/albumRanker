@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="js/main.js" defer></script>
 </head>
 
 <body>
@@ -44,7 +45,7 @@
                                     <div class="login-register-btn mr-50" id="userMenu">
 <?php if (isset($_SESSION['user_id'])): ?>
     <a href="profile.php" class="btn btn-primary">My Profile</a>
-    <a href="logout.php" class="btn btn-outline-primary ml-2">Logout</a>
+    <a href="#" onclick="handleLogout(event)" class="btn btn-outline-primary ml-2">Logout</a>
 <?php else: ?>
     <a href="login.php" class="btn btn-primary">Login / Register</a>
 <?php endif; ?>

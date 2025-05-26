@@ -19,9 +19,7 @@ function formatDate($date, $format = 'F j, Y') {
 
 // Format duration from seconds to MM:SS format
 function formatDuration($seconds) {
-    $minutes = floor($seconds / 60);
-    $remainingSeconds = $seconds % 60;
-    return sprintf("%d:%02d", $minutes, $remainingSeconds);
+    return sprintf("%d:%02d", floor($seconds / 60), $seconds % 60);
 }
 
 // Validate file uploads for security and type checking
@@ -29,25 +27,18 @@ function validateFileUpload($file, $allowedTypes, $maxSize) {
     $errors = [];
     
     if (!isset($file['error']) || is_array($file['error'])) {
-        $errors[] = 'Invalid file parameter.';
-        return $errors;
+        return ['Invalid file parameter.'];
     }
 
-    switch ($file['error']) {
-        case UPLOAD_ERR_OK:
-            break;
-        case UPLOAD_ERR_INI_SIZE:
-        case UPLOAD_ERR_FORM_SIZE:
-            $errors[] = 'File size is too large.';
-            break;
-        case UPLOAD_ERR_PARTIAL:
-            $errors[] = 'File was only partially uploaded.';
-            break;
-        case UPLOAD_ERR_NO_FILE:
-            $errors[] = 'No file was selected.';
-            break;
-        default:
-            $errors[] = 'An unknown error occurred.';
+    $errorMessages = [
+        UPLOAD_ERR_INI_SIZE => 'File size is too large.',
+        UPLOAD_ERR_FORM_SIZE => 'File size is too large.',
+        UPLOAD_ERR_PARTIAL => 'File was only partially uploaded.',
+        UPLOAD_ERR_NO_FILE => 'No file was selected.'
+    ];
+
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        return [$errorMessages[$file['error']] ?? 'An unknown error occurred.'];
     }
 
     if ($file['size'] > $maxSize) {
@@ -67,9 +58,7 @@ function validateFileUpload($file, $allowedTypes, $maxSize) {
 // Generate a safe filename for uploaded files
 function generateSafeFileName($originalName) {
     $info = pathinfo($originalName);
-    $name = basename($originalName, '.' . $info['extension']);
-    $safeName = preg_replace('/[^a-zA-Z0-9]/', '_', $name);
-    return $safeName . '_' . time() . '.' . $info['extension'];
+    return preg_replace('/[^a-zA-Z0-9]/', '_', basename($originalName, '.' . $info['extension'])) . '_' . time() . '.' . $info['extension'];
 }
 
 // Get album cover image path
@@ -77,12 +66,7 @@ function getAlbumCover($coverImage) {
     if (!$coverImage) {
         return 'img/default-album.jpg';
     }
-    // Return direct URL if it's a full URL
-    if (preg_match('/^https?:\/\//i', $coverImage)) {
-        return $coverImage;
-    }
-    // Return path from uploads/covers/ if it's a filename
-    return 'uploads/covers/' . $coverImage;
+    return preg_match('/^https?:\/\//i', $coverImage) ? $coverImage : 'uploads/covers/' . $coverImage;
 }
 
 // Check if user is logged in
@@ -153,10 +137,7 @@ function checkPermission($requiredRole = null) {
 
 // Flash mesaj oluştur
 function setFlashMessage($type, $message) {
-    $_SESSION['flash'] = [
-        'type' => $type,
-        'message' => $message
-    ];
+    $_SESSION['flash'] = ['type' => $type, 'message' => $message];
 }
 
 // Flash mesajı göster ve temizle
@@ -175,12 +156,10 @@ function paginate($totalItems, $itemsPerPage, $currentPage) {
     $totalPages = ceil($totalItems / $itemsPerPage);
     $currentPage = max(1, min($currentPage, $totalPages));
     
-    $start = ($currentPage - 1) * $itemsPerPage;
-    
     return [
         'currentPage' => $currentPage,
         'totalPages' => $totalPages,
-        'start' => $start,
+        'start' => ($currentPage - 1) * $itemsPerPage,
         'itemsPerPage' => $itemsPerPage
     ];
 }
@@ -192,8 +171,7 @@ function h($string) {
 
 // Aktif menü öğesini belirle
 function isActiveMenu($page) {
-    $currentPage = basename($_SERVER['PHP_SELF']);
-    return $currentPage === $page ? 'active' : '';
+    return basename($_SERVER['PHP_SELF']) === $page ? 'active' : '';
 }
 
 // Albüm puanını formatla
@@ -204,9 +182,5 @@ function formatRating($rating) {
 // Kullanıcı profil resmi URL'si
 function getUserProfilePic($profilePic) {
     $filePath = 'uploads/profiles/' . $profilePic;
-    if ($profilePic && file_exists($filePath)) {
-        return $filePath;
-    } else {
-        return 'img/default-profile.jpg';
-    }
+    return ($profilePic && file_exists($filePath)) ? $filePath : 'img/default-profile.jpg';
 } 

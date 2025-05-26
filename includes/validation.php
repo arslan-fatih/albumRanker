@@ -58,10 +58,8 @@ function validateUserData($data) {
         $errors[] = 'Invalid email format.';
     }
     
-    if (!empty($data['password'])) {
-        if (strlen($data['password']) < 6) {
-            $errors[] = 'Password must be at least 6 characters long.';
-        }
+    if (!empty($data['password']) && strlen($data['password']) < 6) {
+        $errors[] = 'Password must be at least 6 characters long.';
     }
     
     return $errors;
@@ -73,15 +71,15 @@ function validateProfilePicture($file) {
     $maxSize = 5 * 1024 * 1024; // 5MB
     
     if (empty($file['name'])) {
-        $errors[] = 'Profile picture is required.';
-    } else {
-        if (!in_array($file['type'], $allowedTypes)) {
-            $errors[] = 'Only JPG, PNG and GIF images are allowed.';
-        }
-        
-        if ($file['size'] > $maxSize) {
-            $errors[] = 'Image size must be less than 5MB.';
-        }
+        return ['Profile picture is required.'];
+    }
+    
+    if (!in_array($file['type'], $allowedTypes)) {
+        $errors[] = 'Only JPG, PNG and GIF images are allowed.';
+    }
+    
+    if ($file['size'] > $maxSize) {
+        $errors[] = 'Image size must be less than 5MB.';
     }
     
     return $errors;

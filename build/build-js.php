@@ -20,8 +20,7 @@ $jsFiles = [
     'js/plugins/magnific-popup/jquery.magnific-popup.min.js',
     'js/plugins/audioplayer/audioplayer.min.js',
     'js/active.js',
-    'js/main.js',
-    'js/messages.js'
+    'js/main.js'
 ];
 
 // Combine and minify JavaScript
