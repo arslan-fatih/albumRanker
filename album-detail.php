@@ -178,6 +178,11 @@ $stmt->execute([$album_id]);
 $rating_stats = $stmt->fetch();
 $avg_rating = $rating_stats && $rating_stats['rating_count'] > 0 ? round($rating_stats['avg_rating'], 1) : null;
 $rating_count = $rating_stats ? $rating_stats['rating_count'] : 0;
+
+// Get favorite count
+$stmt = $conn->prepare("SELECT COUNT(*) as favorite_count FROM favorites WHERE album_id = ?");
+$stmt->execute([$album_id]);
+$favorite_count = $stmt->fetchColumn();
 ?>
 
 <!-- Hero/Banner Area -->
@@ -197,6 +202,9 @@ $rating_count = $rating_stats ? $rating_stats['rating_count'] : 0;
                             <?php endif; ?>
                         </form>
                     <?php endif; ?>
+                    <div class="mt-2">
+                        <span class="badge bg-danger"><i class="fas fa-heart"></i> <?php echo $favorite_count; ?> favorites</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -406,10 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Edit review functionality
-    const editButtons = document.querySelectorAll('.edit-review-btn');
-    const editModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
-    
-    editButtons.forEach(button => {
+    document.querySelectorAll('.edit-review-btn').forEach(button => {
         button.addEventListener('click', function() {
             const reviewId = this.dataset.reviewId;
             const content = this.dataset.content;
@@ -417,18 +422,18 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('editReviewId').value = reviewId;
             document.getElementById('editReviewContent').value = content;
             
+            const editModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
             editModal.show();
         });
     });
 
     // Delete review functionality
-    const deleteButtons = document.querySelectorAll('.delete-review-btn');
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteReviewModal'));
-    
-    deleteButtons.forEach(button => {
+    document.querySelectorAll('.delete-review-btn').forEach(button => {
         button.addEventListener('click', function() {
             const reviewId = this.dataset.reviewId;
             document.getElementById('deleteReviewId').value = reviewId;
+            
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteReviewModal'));
             deleteModal.show();
         });
     });
@@ -450,51 +455,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Update like count
-                        likeCountSpan.textContent = data.likeCount;
-                        
-                        // Toggle active class
-                        if (data.action === 'liked') {
-                            this.classList.add('active');
-                        } else {
-                            this.classList.remove('active');
-                        }
-                        
-                        // Show success message
-                        const toast = new bootstrap.Toast(document.createElement('div'));
-                        toast._element.classList.add('toast', 'bg-success', 'text-white');
-                        toast._element.innerHTML = `
-                            <div class="toast-body">
-                                ${data.message}
-                            </div>
-                        `;
-                        document.body.appendChild(toast._element);
-                        toast.show();
-                        
-                        // Remove toast after it's hidden
-                        toast._element.addEventListener('hidden.bs.toast', function() {
-                            this.remove();
-                        });
+                        likeCountSpan.textContent = data.like_count;
+                        this.classList.toggle('active');
                     } else {
-                        // Show error message
-                        const toast = new bootstrap.Toast(document.createElement('div'));
-                        toast._element.classList.add('toast', 'bg-danger', 'text-white');
-                        toast._element.innerHTML = `
-                            <div class="toast-body">
-                                ${data.message}
-                            </div>
-                        `;
-                        document.body.appendChild(toast._element);
-                        toast.show();
-                        
-                        // Remove toast after it's hidden
-                        toast._element.addEventListener('hidden.bs.toast', function() {
-                            this.remove();
-                        });
+                        alert(data.message || 'Bir hata oluştu.');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
+                    alert('Bir hata oluştu.');
                 });
             }
         });
@@ -619,5 +588,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
+<!-- Bootstrap JS (CDN üzerinden) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

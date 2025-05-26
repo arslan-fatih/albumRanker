@@ -27,7 +27,7 @@
 
     <!-- All Javascript Script -->
     <script src="js/jquery/jquery-2.2.4.min.js"></script>
-    <script src="js/bootstrap/bootstrap.bundle.min.js"></script>
+    <!-- <script src="js/bootstrap/bootstrap.bundle.min.js"></script> -->
     <script src="js/plugins/plugins.js"></script>
     <script src="js/active.js"></script>
 </body>

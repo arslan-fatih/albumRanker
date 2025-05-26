@@ -1,64 +1,9 @@
 <?php session_start(); ?>
-<!DOCTYPE html>
-<html lang="en">
+<?php 
+$pageTitle = 'AlbumRanker - Discover Albums';
+require_once 'includes/header.php';
+?>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>AlbumRanker - Discover Albums</title>
-    <link rel="icon" href="img/core-img/favicon.ico">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="js/main.js" defer></script>
-</head>
-
-<body>
-    <!-- Header -->
-    <header class="header-area">
-        <div class="oneMusic-main-menu">
-            <div class="classy-nav-container breakpoint-off">
-                <div class="container">
-                    <nav class="classy-navbar justify-content-between" id="oneMusicNav">
-                        <!-- Nav brand -->
-                        <a href="index.php" class="nav-brand"><span style="font-size:2rem;font-weight:bold;color:#fff;letter-spacing:2px;">AlbumRanker</span></a>
-                        <!-- Navbar Toggler -->
-                        <div class="classy-navbar-toggler">
-                            <span class="navbarToggler"><span></span><span></span><span></span></span>
-                        </div>
-                        <!-- Menu -->
-                        <div class="classy-menu">
-                            <!-- Close Button -->
-                            <div class="classycloseIcon">
-                                <div class="cross-wrap"><span class="top"></span><span class="bottom"></span></div>
-                            </div>
-                            <!-- Nav Start -->
-                            <div class="classynav">
-                                <ul>
-                                    <li><a href="index.php">Home</a></li>
-                                    <li><a href="albums-store.php">Discover</a></li>
-                                    <?php if (isset($_SESSION['user_id'])): ?>
-                                    <li><a href="album-upload.php">Upload Album</a></li>
-                                    <?php endif; ?>
-                                </ul>
-                                <div class="login-register-cart-button d-flex align-items-center">
-                                    <div class="login-register-btn mr-50" id="userMenu">
-<?php if (isset($_SESSION['user_id'])): ?>
-    <a href="profile.php" class="btn btn-primary">My Profile</a>
-    <a href="#" onclick="handleLogout(event)" class="btn btn-outline-primary ml-2">Logout</a>
-<?php else: ?>
-    <a href="login.php" class="btn btn-primary">Login / Register</a>
-<?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Nav End -->
-                        </div>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </header>
     <!-- ##### Breadcumb Area Start ##### -->
     <section class="breadcumb-area bg-img bg-overlay" style="background-image: url('https://images.pexels.com/photos/257904/pexels-photo-257904.jpeg');">
         <div class="bradcumbContent">
@@ -153,7 +98,16 @@
                     }
                 } else {
                     // Albüm araması
-                    $stmt = $conn->prepare("SELECT a.*, u.username as artist_name FROM albums a LEFT JOIN users u ON a.user_id = u.id WHERE a.title LIKE ? OR a.artist LIKE ? ORDER BY a.created_at DESC LIMIT 24");
+                    $stmt = $conn->prepare("
+                        SELECT a.*, u.username as artist_name,
+                               (SELECT AVG(rating) FROM ratings WHERE album_id = a.id) as avg_rating,
+                               (SELECT COUNT(*) FROM ratings WHERE album_id = a.id) as rating_count
+                        FROM albums a 
+                        LEFT JOIN users u ON a.user_id = u.id 
+                        WHERE a.title LIKE ? OR a.artist LIKE ? 
+                        ORDER BY a.created_at DESC 
+                        LIMIT 24
+                    ");
                     $stmt->execute(['%' . $searchQuery . '%', '%' . $searchQuery . '%']);
                     $albums = $stmt->fetchAll();
                     if ($albums) {
@@ -168,19 +122,11 @@
                                         <h5 class="card-title"><?php echo htmlspecialchars($row['title']); ?></h5>
                                         <p class="card-text text-muted"><?php echo htmlspecialchars($row['artist_name']); ?></p>
                                         <div class="d-flex align-items-center mb-2">
-                                            <div class="rating">
-                                                <?php
-                                                $rating = round($row['rating'] ?? 0);
-                                                for($i = 1; $i <= 5; $i++) {
-                                                    if($i <= $rating) {
-                                                        echo '<i class="fas fa-star text-warning"></i>';
-                                                    } else {
-                                                        echo '<i class="far fa-star text-warning"></i>';
-                                                    }
-                                                }
-                                                ?>
+                                            <div class="album-rating">
+                                                <i class="fa fa-star"></i>
+                                                <span><?php echo formatRating($row['avg_rating'] ?? 0); ?></span>
+                                                <small>(<?php echo $row['rating_count']; ?> ratings)</small>
                                             </div>
-                                            <small class="text-muted ms-2">(<?php echo $row['rating'] ?? 0; ?>)</small>
                                         </div>
                                         <p class="card-text"><?php echo htmlspecialchars($row['description']); ?></p>
                                     </div>
@@ -206,29 +152,7 @@
         <?php endif; ?>
     </main>
     <!-- Footer -->
-    <footer class="footer-area">
-        <div class="container">
-            <div class="row d-flex flex-wrap align-items-center">
-                <div class="col-12 col-md-6">
-                    <a href="index.php"><span style="font-size:1.5rem;font-weight:bold;color:#fff;letter-spacing:2px;">AlbumRanker</span></a>
-                    <p class="copywrite-text">
-                        Copyright &copy;<?php echo date('Y'); ?> All rights reserved | AlbumRanker
-                    </p>
-                </div>
-                <div class="col-12 col-md-6">
-                    <div class="footer-nav">
-                        <ul>
-                            <li><a href="index.php">Home</a></li>
-                            <li><a href="albums-store.php">Discover</a></li>
-                            <?php if (isset($_SESSION['user_id'])): ?>
-                            <li><a href="album-upload.php">Upload Album</a></li>
-                            <?php endif; ?>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <?php require_once 'includes/footer.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {

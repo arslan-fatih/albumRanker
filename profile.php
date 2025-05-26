@@ -45,89 +45,11 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
     $isFollowing = $stmtFollow->fetch() ? true : false;
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="description" content="">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>AlbumRanker - User Profile</title>
-    <link rel="icon" href="img/core-img/favicon.ico">
-    <link rel="stylesheet" href="style.css">
-    <style>
-    .delete-album-btn-custom {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: #fff;
-        border: none;
-        border-radius: 50%;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        cursor: pointer;
-        transition: box-shadow 0.2s;
-        z-index: 2;
-        padding: 0;
-    }
-    .delete-album-btn-custom i {
-        color: #888;
-        font-size: 18px;
-        transition: color 0.2s;
-    }
-    .delete-album-btn-custom:hover {
-        box-shadow: 0 4px 16px rgba(255,0,0,0.10);
-    }
-    .delete-album-btn-custom:hover i {
-        color: #e74c3c;
-    }
-    </style>
-</head>
-<body>
-    <div class="preloader d-flex align-items-center justify-content-center">
-        <div class="lds-ellipsis">
-            <div></div><div></div><div></div><div></div>
-        </div>
-    </div>
-    <header class="header-area">
-        <div class="oneMusic-main-menu">
-            <div class="classy-nav-container breakpoint-off">
-                <div class="container">
-                    <nav class="classy-navbar justify-content-between" id="oneMusicNav">
-                        <a href="index.php" class="nav-brand"><span style="font-size:2rem;font-weight:bold;color:#fff;letter-spacing:2px;">AlbumRanker</span></a>
-                        <div class="classy-navbar-toggler">
-                            <span class="navbarToggler"><span></span><span></span><span></span></span>
-                        </div>
-                        <div class="classy-menu">
-                            <div class="classycloseIcon">
-                                <div class="cross-wrap"><span class="top"></span><span class="bottom"></span></div>
-                            </div>
-                            <div class="classynav">
-                                <ul>
-                                    <li><a href="index.php">Home</a></li>
-                                    <li><a href="albums-store.php">Discover</a></li>
-                                </ul>
-                                <div class="login-register-cart-button d-flex align-items-center">
-                                    <div class="login-register-btn mr-50" id="userMenu">
-<?php if (isset($_SESSION['user_id'])): ?>
-    <a href="profile.php" class="btn btn-primary">My Profile</a>
-    <a href="logout.php" class="btn btn-outline-primary ml-2">Logout</a>
-<?php else: ?>
-    <a href="login.php" class="btn btn-primary">Login / Register</a>
-<?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </header>
+
+    <?php 
+    $pageTitle = 'AlbumRanker - User Profile';
+    require_once 'includes/header.php';
+    ?>
     <section class="hero-area bg-img bg-overlay" style="background-image: url('https://images.pexels.com/photos/257904/pexels-photo-257904.jpeg'); min-height: 340px; display: flex; align-items: center; position: relative;">
         <div class="bradcumbContent">
             <p>User Profile</p>
@@ -424,6 +346,7 @@ if ($f['profile_pic'] && $f['profile_pic'] !== 'default.jpg' && file_exists($pro
     <script src="js/bootstrap/bootstrap.min.js"></script>
     <script src="js/plugins/plugins.js"></script>
     <script src="js/active.js"></script>
+    <script src="js/main.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         // --- PROFİL FOTOĞRAF DEĞİŞKENLERİ ---
@@ -525,7 +448,7 @@ if ($f['profile_pic'] && $f['profile_pic'] !== 'default.jpg' && file_exists($pro
             const formData = new FormData();
             formData.append('action', 'upload_profile');
             formData.append('profile', file);
-            message.innerHTML = '<div class="alert alert-info">Yükleniyor...</div>';
+            message.innerHTML = '<div class="alert alert-info">Uploading...</div>';
             fetch('upload.php', {
                 method: 'POST',
                 body: formData
@@ -533,8 +456,7 @@ if ($f['profile_pic'] && $f['profile_pic'] !== 'default.jpg' && file_exists($pro
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    message.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
-                    profilePic.src = data.file + '?t=' + Date.now();
+                    window.location.reload();
                 } else {
                     message.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
                 }
@@ -742,5 +664,3 @@ if ($f['profile_pic'] && $f['profile_pic'] !== 'default.jpg' && file_exists($pro
         </div>
     </div>
     <?php endif; ?>
-</body>
-</html> 

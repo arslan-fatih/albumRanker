@@ -26,10 +26,9 @@ try {
         $conn->prepare("DELETE FROM favorites WHERE album_id IN ($in)")->execute($albumIds);
     }
 
-    // 3. Kullanıcının favorileri, takipleri, takipçileri, mesajları, puanları, yorumları sil
+    // 3. Kullanıcının favorileri, takipleri, takipçileri, puanları, yorumları sil
     $conn->prepare("DELETE FROM favorites WHERE user_id = ?")->execute([$userId]);
     $conn->prepare("DELETE FROM followers WHERE follower_id = ? OR following_id = ?")->execute([$userId, $userId]);
-    $conn->prepare("DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?")->execute([$userId, $userId]);
     $conn->prepare("DELETE FROM ratings WHERE user_id = ?")->execute([$userId]);
     $conn->prepare("DELETE FROM reviews WHERE user_id = ?")->execute([$userId]);
 

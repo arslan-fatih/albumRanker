@@ -1,18 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="description" content="AlbumRanker - Modern Album Reviews">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>AlbumRanker - Modern Album Reviews</title>
-    <link rel="icon" href="img/core-img/favicon.ico">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
-<body>
-    <?php
+<?php
     $pageTitle = 'AlbumRanker - Modern Album Reviews';
     require_once 'includes/header.php';
 
@@ -54,7 +40,7 @@
         LIMIT 6
     ");
     $underratedAlbums = $stmt->fetchAll();
-    ?>
+?>
 
     <!-- ##### Hero Area Start ##### -->
     <section class="hero-area">

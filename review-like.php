@@ -7,49 +7,54 @@ header('Content-Type: application/json');
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Please login to like reviews.']);
+    echo json_encode(['success' => false, 'message' => 'Oturum açmanız gerekiyor.']);
     exit;
 }
 
 // Check if review_id is provided
 if (!isset($_POST['review_id']) || !is_numeric($_POST['review_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Invalid review ID.']);
+    echo json_encode(['success' => false, 'message' => 'Geçersiz yorum ID.']);
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
-$review_id = (int)$_POST['review_id'];
+$userId = $_SESSION['user_id'];
+$reviewId = (int)$_POST['review_id'];
 
 try {
-    // Check if like already exists
+    // Yorumun var olup olmadığını kontrol et
+    $stmt = $conn->prepare("SELECT 1 FROM reviews WHERE id = ?");
+    $stmt->execute([$reviewId]);
+    if (!$stmt->fetch()) {
+        echo json_encode(['success' => false, 'message' => 'Yorum bulunamadı.']);
+        exit;
+    }
+
+    // Kullanıcının yorumu daha önce beğenip beğenmediğini kontrol et
     $stmt = $conn->prepare("SELECT 1 FROM review_likes WHERE user_id = ? AND review_id = ?");
-    $stmt->execute([$user_id, $review_id]);
+    $stmt->execute([$userId, $reviewId]);
     $isLiked = $stmt->fetch();
 
     if ($isLiked) {
-        // Unlike
+        // Beğeniyi kaldır
         $stmt = $conn->prepare("DELETE FROM review_likes WHERE user_id = ? AND review_id = ?");
-        $stmt->execute([$user_id, $review_id]);
-        $action = 'unliked';
+        $stmt->execute([$userId, $reviewId]);
     } else {
-        // Like
+        // Beğeni ekle
         $stmt = $conn->prepare("INSERT INTO review_likes (user_id, review_id) VALUES (?, ?)");
-        $stmt->execute([$user_id, $review_id]);
-        $action = 'liked';
+        $stmt->execute([$userId, $reviewId]);
     }
 
-    // Get updated like count
+    // Güncel beğeni sayısını al
     $stmt = $conn->prepare("SELECT COUNT(*) FROM review_likes WHERE review_id = ?");
-    $stmt->execute([$review_id]);
+    $stmt->execute([$reviewId]);
     $likeCount = $stmt->fetchColumn();
 
     echo json_encode([
         'success' => true,
-        'action' => $action,
-        'likeCount' => $likeCount,
-        'message' => $action === 'liked' ? 'Review liked!' : 'Review unliked!'
+        'like_count' => $likeCount,
+        'message' => $isLiked ? 'Beğeni kaldırıldı.' : 'Beğeni eklendi.'
     ]);
 } catch (PDOException $e) {
     error_log("Review like error: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'An error occurred.']);
+    echo json_encode(['success' => false, 'message' => 'Bir hata oluştu.']);
 } 
