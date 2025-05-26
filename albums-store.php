@@ -59,7 +59,7 @@
         </div>
     </header>
     <!-- ##### Breadcumb Area Start ##### -->
-    <section class="breadcumb-area bg-img bg-overlay" style="background-image: url('https://www.chapmanarchitects.co.uk/wp-content/uploads/2017/08/Abbey_Road_4.jpg');">
+    <section class="breadcumb-area bg-img bg-overlay" style="background-image: url('https://images.pexels.com/photos/257904/pexels-photo-257904.jpeg');">
         <div class="bradcumbContent">
             <p>Discover</p>
             <h2>Uploaded Albums</h2>
@@ -130,7 +130,7 @@
                             ?>
                             <div class="col">
                                 <div class="card h-100 shadow-sm text-center">
-                                    <img src="<?php echo htmlspecialchars($user['profile_pic'] && $user['profile_pic'] !== 'default.jpg' ? 'uploads/profile/' . $user['profile_pic'] : 'img/core-img/default.jpg'); ?>" class="rounded-circle mx-auto mt-3" alt="Profile" style="width:100px;height:100px;object-fit:cover;">
+                                    <img src="<?php echo htmlspecialchars($user['profile_pic'] ? 'uploads/profile/' . $user['profile_pic'] : 'img/core-img/default.jpg'); ?>" class="rounded-circle mx-auto mt-3" alt="Profile" style="width:100px;height:100px;object-fit:cover;">
                                     <div class="card-body">
                                         <h5 class="card-title"><?php echo htmlspecialchars($user['username']); ?></h5>
                                         <p class="card-text text-muted"><?php echo htmlspecialchars($user['bio'] ?? ''); ?></p>

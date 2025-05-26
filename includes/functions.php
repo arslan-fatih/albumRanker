@@ -1,9 +1,10 @@
 <?php
 /**
- * Yardımcı fonksiyonlar
+ * Helper Functions
+ * This file contains utility functions used throughout the application
  */
 
-// Güvenli input temizleme
+// Sanitize input data for security
 function sanitize($input) {
     if (is_array($input)) {
         return array_map('sanitize', $input);
@@ -11,24 +12,24 @@ function sanitize($input) {
     return htmlspecialchars(strip_tags(trim($input)), ENT_QUOTES, 'UTF-8');
 }
 
-// Tarih formatla
+// Format date to a readable string
 function formatDate($date, $format = 'F j, Y') {
     return date($format, strtotime($date));
 }
 
-// Süre formatla (saniye -> MM:SS)
+// Format duration from seconds to MM:SS format
 function formatDuration($seconds) {
     $minutes = floor($seconds / 60);
     $remainingSeconds = $seconds % 60;
     return sprintf("%d:%02d", $minutes, $remainingSeconds);
 }
 
-// Dosya yükleme kontrolü
+// Validate file uploads for security and type checking
 function validateFileUpload($file, $allowedTypes, $maxSize) {
     $errors = [];
     
     if (!isset($file['error']) || is_array($file['error'])) {
-        $errors[] = 'Geçersiz dosya parametresi.';
+        $errors[] = 'Invalid file parameter.';
         return $errors;
     }
 
@@ -37,38 +38,104 @@ function validateFileUpload($file, $allowedTypes, $maxSize) {
             break;
         case UPLOAD_ERR_INI_SIZE:
         case UPLOAD_ERR_FORM_SIZE:
-            $errors[] = 'Dosya boyutu çok büyük.';
+            $errors[] = 'File size is too large.';
             break;
         case UPLOAD_ERR_PARTIAL:
-            $errors[] = 'Dosya tam yüklenemedi.';
+            $errors[] = 'File was only partially uploaded.';
             break;
         case UPLOAD_ERR_NO_FILE:
-            $errors[] = 'Dosya seçilmedi.';
+            $errors[] = 'No file was selected.';
             break;
         default:
-            $errors[] = 'Bilinmeyen bir hata oluştu.';
+            $errors[] = 'An unknown error occurred.';
     }
 
     if ($file['size'] > $maxSize) {
-        $errors[] = 'Dosya boyutu izin verilenden büyük.';
+        $errors[] = 'File size exceeds the allowed limit.';
     }
 
     $finfo = new finfo(FILEINFO_MIME_TYPE);
     $mimeType = $finfo->file($file['tmp_name']);
 
     if (!in_array($mimeType, $allowedTypes)) {
-        $errors[] = 'Geçersiz dosya türü.';
+        $errors[] = 'Invalid file type.';
     }
 
     return $errors;
 }
 
-// Güvenli dosya adı oluştur
+// Generate a safe filename for uploaded files
 function generateSafeFileName($originalName) {
     $info = pathinfo($originalName);
     $name = basename($originalName, '.' . $info['extension']);
     $safeName = preg_replace('/[^a-zA-Z0-9]/', '_', $name);
     return $safeName . '_' . time() . '.' . $info['extension'];
+}
+
+// Get album cover image path
+function getAlbumCover($coverImage) {
+    if (!$coverImage) {
+        return 'img/default-album.jpg';
+    }
+    // Return direct URL if it's a full URL
+    if (preg_match('/^https?:\/\//i', $coverImage)) {
+        return $coverImage;
+    }
+    // Return path from uploads/covers/ if it's a filename
+    return 'uploads/covers/' . $coverImage;
+}
+
+// Check if user is logged in
+function isLoggedIn() {
+    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+}
+
+// Get current logged-in user's ID
+function getCurrentUserId() {
+    return isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+}
+
+/**
+ * Calculate and update album's average rating
+ * @param int $albumId Album ID
+ * @return float|null Average rating or null if no ratings
+ */
+function updateAlbumAverageRating($albumId) {
+    global $conn;
+    
+    try {
+        // Calculate average rating
+        $stmt = $conn->prepare("
+            SELECT AVG(rating) as avg_rating, COUNT(*) as rating_count 
+            FROM ratings 
+            WHERE album_id = ?
+        ");
+        $stmt->execute([$albumId]);
+        $result = $stmt->fetch();
+        
+        if ($result && $result['rating_count'] > 0) {
+            // Update album's rating in the database
+            $stmt = $conn->prepare("
+                UPDATE albums 
+                SET rating = ?, 
+                    rating_count = ?,
+                    updated_at = NOW()
+                WHERE id = ?
+            ");
+            $stmt->execute([
+                round($result['avg_rating'], 1),
+                $result['rating_count'],
+                $albumId
+            ]);
+            
+            return round($result['avg_rating'], 1);
+        }
+        
+        return null;
+    } catch (PDOException $e) {
+        error_log("Error updating album rating: " . $e->getMessage());
+        return null;
+    }
 }
 
 // Kullanıcı yetkisi kontrolü
@@ -136,71 +203,10 @@ function formatRating($rating) {
 
 // Kullanıcı profil resmi URL'si
 function getUserProfilePic($profilePic) {
-    return $profilePic ? 'uploads/profiles/' . $profilePic : 'img/default-profile.jpg';
-}
-
-// Albüm kapak resmi URL'si
-function getAlbumCover($coverImage) {
-    if (!$coverImage) {
-        return 'img/default-album.jpg';
-    }
-    // Eğer tam URL ise direkt döndür
-    if (preg_match('/^https?:\/\//i', $coverImage)) {
-        return $coverImage;
-    }
-    // Dosya adı ise uploads/covers/ altından döndür
-    return 'uploads/covers/' . $coverImage;
-}
-
-// Kullanıcı giriş kontrolü
-function isLoggedIn() {
-    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
-}
-
-// Giriş yapan kullanıcının ID'si
-function getCurrentUserId() {
-    return isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
-}
-
-/**
- * Albümün ortalama puanını hesaplar ve günceller
- * @param int $albumId Albüm ID
- * @return float|null Ortalama puan veya null
- */
-function updateAlbumAverageRating($albumId) {
-    global $conn;
-    
-    try {
-        // Önce ortalama puanı hesapla
-        $stmt = $conn->prepare("
-            SELECT AVG(rating) as avg_rating, COUNT(*) as rating_count 
-            FROM ratings 
-            WHERE album_id = ?
-        ");
-        $stmt->execute([$albumId]);
-        $result = $stmt->fetch();
-        
-        if ($result && $result['rating_count'] > 0) {
-            // Albüm tablosundaki rating alanını güncelle
-            $stmt = $conn->prepare("
-                UPDATE albums 
-                SET rating = ?, 
-                    rating_count = ?,
-                    updated_at = NOW()
-                WHERE id = ?
-            ");
-            $stmt->execute([
-                round($result['avg_rating'], 1),
-                $result['rating_count'],
-                $albumId
-            ]);
-            
-            return round($result['avg_rating'], 1);
-        }
-        
-        return null;
-    } catch (PDOException $e) {
-        error_log("Albüm puanı güncellenirken hata: " . $e->getMessage());
-        return null;
+    $filePath = 'uploads/profiles/' . $profilePic;
+    if ($profilePic && file_exists($filePath)) {
+        return $filePath;
+    } else {
+        return 'img/default-profile.jpg';
     }
 } 

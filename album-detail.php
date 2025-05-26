@@ -16,11 +16,10 @@ require_once 'includes/header.php';
 $album_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if (!$album_id) {
     echo '<div class="container mt-5"><div class="alert alert-danger">Album not found.</div></div>';
-    require_once 'includes/footer.php';
     exit;
 }
 
-// Albüm ve yükleyen kullanıcı bilgisi
+// Get album and uploader information
 $stmt = $conn->prepare("
     SELECT a.*, u.username, u.id as user_id
     FROM albums a
@@ -31,11 +30,10 @@ $stmt->execute([$album_id]);
 $album = $stmt->fetch();
 if (!$album) {
     echo '<div class="container mt-5"><div class="alert alert-danger">Album not found.</div></div>';
-    require_once 'includes/footer.php';
     exit;
 }
 
-// Yükleyenin ilk yorumu ve puanı (rating tablosunda tutuluyor)
+// Get uploader's first review and rating (stored in ratings table)
 $stmt = $conn->prepare("
     SELECT r.rating, r.created_at, u.username, u.id as user_id, r.id as rating_id
     FROM ratings r
@@ -46,7 +44,7 @@ $stmt = $conn->prepare("
 $stmt->execute([$album_id, $album['user_id']]);
 $first_review = $stmt->fetch();
 
-// Diğer kullanıcı yorumları (reviews tablosu)
+// Get other user reviews (from reviews table)
 $stmt = $conn->prepare("
     SELECT r.*, u.username, u.id as user_id
     FROM reviews r
@@ -57,31 +55,88 @@ $stmt = $conn->prepare("
 $stmt->execute([$album_id]);
 $other_reviews = $stmt->fetchAll();
 
-// Yorum ekleme işlemi
+// Handle review submission, editing and deletion
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
-    // Kullanıcının bu albüme kaç yorum yaptığı kontrol edilsin
-    $stmt = $conn->prepare("SELECT COUNT(*) FROM reviews WHERE user_id = ? AND album_id = ?");
-    $stmt->execute([$_SESSION['user_id'], $album_id]);
-    $user_review_count = $stmt->fetchColumn();
-    if ($user_review_count >= 5) {
-        $error = "You can add a maximum of 5 reviews per album.";
+    if (isset($_POST['delete_review'])) {
+        // Handle review deletion
+        $review_id = (int)$_POST['review_id'];
+        
+        try {
+            $stmt = $conn->prepare("SELECT user_id FROM reviews WHERE id = ?");
+            $stmt->execute([$review_id]);
+            $review = $stmt->fetch();
+            
+            if ($review && $review['user_id'] == $_SESSION['user_id']) {
+                $stmt = $conn->prepare("DELETE FROM reviews WHERE id = ?");
+                $stmt->execute([$review_id]);
+                header("Location: album-detail.php?id=$album_id");
+                exit;
+            } else {
+                $error = "You can only delete your own reviews.";
+            }
+        } catch (PDOException $e) {
+            error_log("Error while deleting review: " . $e->getMessage());
+            $error = "An error occurred while deleting the review.";
+        }
+    } elseif (isset($_POST['edit_review'])) {
+        // Handle review editing
+        $review_id = (int)$_POST['review_id'];
+        $content = trim($_POST['content'] ?? '');
+        
+        if ($content) {
+            try {
+                $stmt = $conn->prepare("SELECT user_id FROM reviews WHERE id = ?");
+                $stmt->execute([$review_id]);
+                $review = $stmt->fetch();
+                
+                if ($review && $review['user_id'] == $_SESSION['user_id']) {
+                    $stmt = $conn->prepare("UPDATE reviews SET content = ?, updated_at = NOW() WHERE id = ?");
+                    $stmt->execute([$content, $review_id]);
+                    header("Location: album-detail.php?id=$album_id");
+                    exit;
+                } else {
+                    $error = "You can only edit your own reviews.";
+                }
+            } catch (PDOException $e) {
+                error_log("Error while editing review: " . $e->getMessage());
+                $error = "An error occurred while editing the review.";
+            }
+        }
     } else {
+        // Handle new review submission
+        // Check how many reviews the user has made for this album
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM reviews WHERE user_id = ? AND album_id = ?");
+        $stmt->execute([$_SESSION['user_id'], $album_id]);
+        $user_review_count = $stmt->fetchColumn();
+        
         $content = trim($_POST['content'] ?? '');
         $rating = isset($_POST['rating']) ? (float)$_POST['rating'] : null;
-        if ($content && $rating >= 1 && $rating <= 10) {
+        
+        if ($user_review_count >= 5) {
+            $error = "You can add a maximum of 5 reviews per album.";
+        } elseif (!$content) {
+            $error = "Please write a review.";
+        } else {
             try {
                 $conn->beginTransaction();
-                // Yorumu ekle
+                
+                // Add the review
                 $stmt = $conn->prepare("INSERT INTO reviews (user_id, album_id, content, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())");
                 $stmt->execute([$_SESSION['user_id'], $album_id, $content]);
-                // Kullanıcı daha önce puan vermediyse ratings tablosuna da ekle
-                $stmt = $conn->prepare("SELECT id FROM ratings WHERE user_id = ? AND album_id = ?");
-                $stmt->execute([$_SESSION['user_id'], $album_id]);
-                if (!$stmt->fetch()) {
-                    $stmt = $conn->prepare("INSERT INTO ratings (user_id, album_id, rating, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())");
-                    $stmt->execute([$_SESSION['user_id'], $album_id, $rating]);
+                
+                // Add rating only if user hasn't rated before and rating is provided
+                if ($rating !== null && $rating >= 1 && $rating <= 10) {
+                    $stmt = $conn->prepare("SELECT id FROM ratings WHERE user_id = ? AND album_id = ?");
+                    $stmt->execute([$_SESSION['user_id'], $album_id]);
+                    if (!$stmt->fetch()) {
+                        $stmt = $conn->prepare("INSERT INTO ratings (user_id, album_id, rating, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())");
+                        $stmt->execute([$_SESSION['user_id'], $album_id, $rating]);
+                    } else {
+                        $error = "You have already rated this album. You can only rate once.";
+                    }
                 }
-                // Albümün ortalama puanını güncelle
+                
+                // Update album's average rating
                 updateAlbumAverageRating($album_id);
                 $conn->commit();
                 header("Location: album-detail.php?id=$album_id");
@@ -95,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
     }
 }
 
-// Favori ekleme/çıkarma işlemi
+// Handle favorite add/remove action
 if (isLoggedIn() && isset($_POST['favorite_action'])) {
     $user_id = getCurrentUserId();
     if ($_POST['favorite_action'] === 'add') {
@@ -109,7 +164,7 @@ if (isLoggedIn() && isset($_POST['favorite_action'])) {
     exit;
 }
 
-// Kullanıcı bu albümü favorilere eklemiş mi?
+// Check if user has favorited this album
 $is_favorited = false;
 if (isLoggedIn()) {
     $stmt = $conn->prepare("SELECT 1 FROM favorites WHERE user_id = ? AND album_id = ?");
@@ -117,7 +172,7 @@ if (isLoggedIn()) {
     $is_favorited = $stmt->fetchColumn() ? true : false;
 }
 
-// Ortalama puan ve oy sayısını anlık olarak ratings tablosundan çek
+// Get current average rating and vote count from ratings table
 $stmt = $conn->prepare("SELECT AVG(rating) as avg_rating, COUNT(*) as rating_count FROM ratings WHERE album_id = ?");
 $stmt->execute([$album_id]);
 $rating_stats = $stmt->fetch();
@@ -126,7 +181,7 @@ $rating_count = $rating_stats ? $rating_stats['rating_count'] : 0;
 ?>
 
 <!-- Hero/Banner Area -->
-<section class="hero-area bg-img bg-overlay" style="background-image: url('https://www.chapmanarchitects.co.uk/wp-content/uploads/2017/08/Abbey_Road_4.jpg'); min-height: 340px; display: flex; align-items: center; position: relative;">
+<section class="hero-area bg-img bg-overlay" style="background-image: url('https://images.pexels.com/photos/257904/pexels-photo-257904.jpeg'); min-height: 340px; display: flex; align-items: center; position: relative;">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-12 col-md-8">
@@ -215,15 +270,62 @@ $rating_count = $rating_stats ? $rating_stats['rating_count'] : 0;
 
             <!-- Diğer Yorumlar -->
             <h4 class="mb-3">Reviews</h4>
+
+            <!-- Telif Hakkı Uyarısı -->
+            <div class="card mb-4 border-warning">
+                <div class="card-body">
+                    <h5 class="card-title text-warning"><i class="fas fa-copyright"></i> Copyright Notice</h5>
+                    <p class="card-text">
+                        This album cover and related content are the property of their respective owners. 
+                        AlbumRanker uses this content under fair use principles for informational and review purposes only.
+                        No commercial use is intended or implied. All rights belong to their original owners.
+                    </p>
+                    <p class="card-text mb-0">
+                        <small class="text-muted">
+                            For more information about our copyright policy, please visit our 
+                            <a href="copyright.php">Copyright & Usage Rights</a> page.
+                        </small>
+                    </p>
+                </div>
+            </div>
+
             <?php if ($other_reviews): ?>
-                <?php foreach ($other_reviews as $review): ?>
+                <?php foreach ($other_reviews as $review): 
+                    // Get like count for this review
+                    $stmt = $conn->prepare("SELECT COUNT(*) FROM review_likes WHERE review_id = ?");
+                    $stmt->execute([$review['id']]);
+                    $likeCount = $stmt->fetchColumn();
+                    
+                    // Check if current user has liked this review
+                    $isLiked = false;
+                    if (isLoggedIn()) {
+                        $stmt = $conn->prepare("SELECT 1 FROM review_likes WHERE user_id = ? AND review_id = ?");
+                        $stmt->execute([getCurrentUserId(), $review['id']]);
+                        $isLiked = $stmt->fetchColumn() ? true : false;
+                    }
+                ?>
                     <div class="card mb-2 shadow-sm">
-                        <div class="card-header">
-                            <a href="profile.php?id=<?php echo $review['user_id']; ?>"><?php echo h($review['username']); ?></a>
-                            <span class="float-end text-muted" style="font-size:0.9em;"><?php echo formatDate($review['created_at']); ?></span>
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="profile.php?id=<?php echo $review['user_id']; ?>"><?php echo h($review['username']); ?></a>
+                                <span class="float-end text-muted" style="font-size:0.9em;"><?php echo formatDate($review['created_at']); ?></span>
+                            </div>
+                            <?php if (isLoggedIn() && $_SESSION['user_id'] == $review['user_id']): ?>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary edit-review-btn" 
+                                            data-review-id="<?php echo $review['id']; ?>"
+                                            data-content="<?php echo h($review['content']); ?>">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-review-btn"
+                                            data-review-id="<?php echo $review['id']; ?>">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            <?php endif; ?>
                         </div>
                         <div class="card-body">
-                            <p><?php echo nl2br(h($review['content'])); ?></p>
+                            <p class="review-content"><?php echo nl2br(h($review['content'])); ?></p>
                             <?php
                             // Kullanıcının puanı (ratings tablosundan)
                             $stmt = $conn->prepare("SELECT rating FROM ratings WHERE user_id = ? AND album_id = ?");
@@ -232,8 +334,12 @@ $rating_count = $rating_stats ? $rating_stats['rating_count'] : 0;
                             if ($user_rating): ?>
                                 <p class="mb-0"><strong>Rating:</strong> <?php echo h($user_rating); ?>/10</p>
                             <?php endif; ?>
-                            <!-- Beğeni butonu (dummy) -->
-                            <button class="btn btn-outline-success btn-sm mt-2" disabled>Like (<span>0</span>)</button>
+                            <!-- Beğeni butonu -->
+                            <button class="btn btn-outline-success btn-sm mt-2 like-review-btn <?php echo $isLiked ? 'active' : ''; ?>"
+                                    data-review-id="<?php echo $review['id']; ?>"
+                                    <?php echo !isLoggedIn() ? 'disabled' : ''; ?>>
+                                <i class="fas fa-heart"></i> Like (<span class="like-count"><?php echo $likeCount; ?></span>)
+                            </button>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -298,6 +404,101 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = 'delete-album.php?id=<?php echo $album_id; ?>';
         });
     }
+
+    // Edit review functionality
+    const editButtons = document.querySelectorAll('.edit-review-btn');
+    const editModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
+    
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const reviewId = this.dataset.reviewId;
+            const content = this.dataset.content;
+            
+            document.getElementById('editReviewId').value = reviewId;
+            document.getElementById('editReviewContent').value = content;
+            
+            editModal.show();
+        });
+    });
+
+    // Delete review functionality
+    const deleteButtons = document.querySelectorAll('.delete-review-btn');
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteReviewModal'));
+    
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const reviewId = this.dataset.reviewId;
+            document.getElementById('deleteReviewId').value = reviewId;
+            deleteModal.show();
+        });
+    });
+
+    // Like button click handler
+    document.querySelectorAll('.like-review-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            if (!this.disabled) {
+                const reviewId = this.dataset.reviewId;
+                const likeCountSpan = this.querySelector('.like-count');
+                
+                fetch('review-like.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'review_id=' + reviewId
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update like count
+                        likeCountSpan.textContent = data.likeCount;
+                        
+                        // Toggle active class
+                        if (data.action === 'liked') {
+                            this.classList.add('active');
+                        } else {
+                            this.classList.remove('active');
+                        }
+                        
+                        // Show success message
+                        const toast = new bootstrap.Toast(document.createElement('div'));
+                        toast._element.classList.add('toast', 'bg-success', 'text-white');
+                        toast._element.innerHTML = `
+                            <div class="toast-body">
+                                ${data.message}
+                            </div>
+                        `;
+                        document.body.appendChild(toast._element);
+                        toast.show();
+                        
+                        // Remove toast after it's hidden
+                        toast._element.addEventListener('hidden.bs.toast', function() {
+                            this.remove();
+                        });
+                    } else {
+                        // Show error message
+                        const toast = new bootstrap.Toast(document.createElement('div'));
+                        toast._element.classList.add('toast', 'bg-danger', 'text-white');
+                        toast._element.innerHTML = `
+                            <div class="toast-body">
+                                ${data.message}
+                            </div>
+                        `;
+                        document.body.appendChild(toast._element);
+                        toast.show();
+                        
+                        // Remove toast after it's hidden
+                        toast._element.addEventListener('hidden.bs.toast', function() {
+                            this.remove();
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        });
+    });
 });
 </script>
 
@@ -353,8 +554,70 @@ document.addEventListener('DOMContentLoaded', function() {
 .edit-album-btn-custom:hover i {
     color: #3498db;
 }
+
+/* Albüm fotoğrafı için sabit boyut */
+.col-md-4 img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    object-position: center;
+}
+
+.like-review-btn.active {
+    background-color: #198754;
+    color: white;
+}
 </style>
+
+<!-- Edit Review Modal -->
+<div class="modal fade" id="editReviewModal" tabindex="-1" aria-labelledby="editReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editReviewModalLabel">Edit Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="album-detail.php?id=<?php echo $album_id; ?>" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="review_id" id="editReviewId">
+                    <input type="hidden" name="edit_review" value="1">
+                    <div class="mb-3">
+                        <label for="editReviewContent" class="form-label">Your Review</label>
+                        <textarea class="form-control" id="editReviewContent" name="content" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Review Modal -->
+<div class="modal fade" id="deleteReviewModal" tabindex="-1" aria-labelledby="deleteReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteReviewModalLabel">Delete Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this review? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <form action="album-detail.php?id=<?php echo $album_id; ?>" method="post">
+                    <input type="hidden" name="review_id" id="deleteReviewId">
+                    <input type="hidden" name="delete_review" value="1">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete Review</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php require_once 'includes/footer.php'; ?>
 </body>
-</html> 
+</html>

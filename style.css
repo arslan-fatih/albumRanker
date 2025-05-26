@@ -843,43 +843,36 @@ img {
   z-index: 1;
   -webkit-transition-duration: 500ms;
   transition-duration: 500ms;
-  margin-bottom: 30px; }
-  .single-album-area .album-thumb {
+  margin-bottom: 30px;
+  display: inline-block;
+  max-width: 180px;
+  box-sizing: border-box;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 0;
+}
+
+.single-album-area .album-thumb {
     position: relative;
-    z-index: 1; }
-    .single-album-area .album-thumb .album-price p {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      background-color: #fff;
-      margin-bottom: 0;
-      line-height: 1;
-      padding: 5px 15px;
-      border-radius: 15px;
-      z-index: 20; }
-    .single-album-area .album-thumb .play-icon a {
-      color: #fff;
-      font-size: 50px;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      line-height: 1;
-      -webkit-transform: translate(-50%, -50%);
-      transform: translate(-50%, -50%); }
-  .single-album-area img {
-    width: 100%; }
-  .single-album-area .album-info {
+    z-index: 1;
+}
+
+.single-album-area .album-info {
     display: block;
     position: relative;
     z-index: 1;
     padding-top: 15px;
-    padding-bottom: 15px; }
-    .single-album-area .album-info h5 {
-      font-size: 18px;
-      margin-bottom: 0;
-      text-transform: uppercase; }
-    .single-album-area .album-info p {
-      margin-bottom: 0; }
+    padding-bottom: 15px;
+    text-align: left;
+    padding: 15px;
+}
+
+.single-album-area img {
+  height: auto;
+  display: block;
+  max-width: 180px;
+  margin: 0 auto;
+}
 
 .albums-slideshow {
   position: relative;
@@ -1986,4 +1979,16 @@ img {
 .footer-area, .footer-area .copywrite-text {
     border-bottom: none !important;
     box-shadow: none !important;
+}
+
+.single-album-area .album-thumb {
+    /* Align the content inside album-thumb to center */
+    text-align: center;
+}
+
+/* Add new rule for centering columns */
+.latest-albums-area .col,
+.top-albums-area .col,
+.underrated-albums-area .col {
+    text-align: center !important;
 }

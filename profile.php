@@ -128,7 +128,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
             </div>
         </div>
     </header>
-    <section class="hero-area bg-img bg-overlay" style="background-image: url('https://www.chapmanarchitects.co.uk/wp-content/uploads/2017/08/Abbey_Road_4.jpg'); min-height: 340px; display: flex; align-items: center; position: relative;">
+    <section class="hero-area bg-img bg-overlay" style="background-image: url('https://images.pexels.com/photos/257904/pexels-photo-257904.jpeg'); min-height: 340px; display: flex; align-items: center; position: relative;">
         <div class="bradcumbContent">
             <p>User Profile</p>
             <h2 id="profileUsername"><?php echo htmlspecialchars($user['username']); ?></h2>
@@ -140,7 +140,14 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                 <div class="col-12 col-lg-4">
                     <div class="profile-info">
                         <div class="profile-pic text-center mb-30">
-                            <img id="profilePic" src="<?php echo htmlspecialchars($user['profile_pic'] && $user['profile_pic'] !== 'default.jpg' ? 'uploads/profile/' . $user['profile_pic'] : 'img/core-img/default.jpg'); ?>" alt="Profile Picture" class="rounded-circle" style="width: 200px; height: 200px; object-fit: cover;">
+                            <img id="profilePic" src="<?php 
+                                $profilePicPath = 'uploads/profile/' . $user['profile_pic'];
+                                if ($user['profile_pic'] && $user['profile_pic'] !== 'default.jpg' && file_exists($profilePicPath)) {
+                                    echo htmlspecialchars($profilePicPath);
+                                } else {
+                                    echo 'img/core-img/default.jpg';
+                                }
+                            ?>" alt="Profile Picture" class="rounded-circle" style="width: 200px; height: 200px; object-fit: cover;">
                             <?php if (isset(
                                 $isOwnProfile
                             ) && $isOwnProfile): ?>
@@ -177,6 +184,11 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                             <h4 id="profileName"><?php echo htmlspecialchars($user['username']); ?></h4>
                             <p class="text-muted" id="profileUsernameTag">@<?php echo htmlspecialchars($user['username']); ?></p>
                             <p class="bio-text" id="profileBio"><?php echo htmlspecialchars($user['bio'] ?? ''); ?></p>
+                            <?php if ($isOwnProfile): ?>
+                            <button type="button" class="btn btn-outline-primary mt-2" id="editProfileBtn">
+                                <i class="icon-edit"></i> Edit Profile
+                            </button>
+                            <?php endif; ?>
                         </div>
                         <div class="user-stats">
                             <div class="stat-item">
@@ -209,6 +221,11 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                         <div class="profile-actions text-center mb-3">
                             <button class="btn btn-outline-primary follow-btn" data-user-id="<?php echo $user['id']; ?>"><?php echo $isFollowing ? 'Unfollow' : 'Follow'; ?></button>
                         </div>
+                        <?php endif; ?>
+                        <?php if ($isOwnProfile): ?>
+                        <button type="button" class="btn btn-outline-danger mt-2" id="deleteAccountBtn">
+                            <i class="icon-trash"></i> Delete Account
+                        </button>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -270,7 +287,8 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                     <?php
                                     // Kullanıcının yaptığı review'ları (reviews tablosundan) ve (varsa) puanını (ratings tablosundan) çekiyoruz.
                                     $stmt = $conn->prepare("
-                                        SELECT r.id, r.album_id, r.content, r.created_at, a.title AS album_title, a.artist AS album_artist, rt.rating
+                                        SELECT r.id, r.album_id, r.content, r.created_at, a.title AS album_title, a.artist AS album_artist, rt.rating,
+                                               (SELECT COUNT(*) FROM review_likes WHERE review_id = r.id) as like_count
                                         FROM reviews r
                                         JOIN albums a ON r.album_id = a.id
                                         LEFT JOIN ratings rt ON (rt.user_id = r.user_id AND rt.album_id = r.album_id)
@@ -291,9 +309,14 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                         </div>
                                         <div class="card-body">
                                             <p class="card-text"><?php echo nl2br(htmlspecialchars($review['content'])); ?></p>
-                                            <?php if (isset($review['rating'])) { ?>
-                                            <p class="card-text text-muted mb-0">Rating: <?php echo htmlspecialchars($review['rating']); ?>/10</p>
-                                            <?php } ?>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <?php if (isset($review['rating'])) { ?>
+                                                <p class="card-text text-muted mb-0">Rating: <?php echo htmlspecialchars($review['rating']); ?>/10</p>
+                                                <?php } ?>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-heart"></i> <?php echo $review['like_count']; ?> likes
+                                                </small>
+                                            </div>
                                         </div>
                                     </div>
                                     <?php
@@ -503,8 +526,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
             .then(data => {
                 if (data.success) {
                     message.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
-                    const imgPath = '/AlbumRanker' + data.file;
-                    profilePic.src = imgPath + '?t=' + Date.now();
+                    profilePic.src = data.file + '?t=' + Date.now();
                 } else {
                     message.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
                 }
@@ -550,6 +572,166 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
           </div>
         </div>
       </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Profile Edit Modal -->
+    <?php if ($isOwnProfile): ?>
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editProfileForm">
+                        <div class="form-group">
+                            <label for="editUsername">Username</label>
+                            <input type="text" class="form-control" id="editUsername" name="username" value="<?php echo htmlspecialchars($user['username']); ?>" required>
+                            <small class="form-text text-muted">Username can only contain letters, numbers, and underscores.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="editBio">Bio</label>
+                            <textarea class="form-control" id="editBio" name="bio" rows="4" maxlength="500"><?php echo htmlspecialchars($user['bio'] ?? ''); ?></textarea>
+                            <small class="form-text text-muted">Tell us about yourself (max 500 characters).</small>
+                        </div>
+                        <div id="editProfileMessage" class="alert" style="display: none;"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <script>
+    $(document).ready(function() {
+        // Edit Profile Button Click
+        $('#editProfileBtn').click(function() {
+            $('#editProfileModal').modal('show');
+        });
+
+        // Save Profile Changes
+        $('#saveProfileBtn').click(function() {
+            const username = $('#editUsername').val().trim();
+            const bio = $('#editBio').val().trim();
+            const messageDiv = $('#editProfileMessage');
+
+            // Validate username
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                messageDiv.removeClass('alert-success').addClass('alert-danger')
+                    .html('Username can only contain letters, numbers, and underscores.')
+                    .show();
+                return;
+            }
+
+            // Send AJAX request
+            $.ajax({
+                url: 'update-profile.php',
+                method: 'POST',
+                data: {
+                    username: username,
+                    bio: bio
+                },
+                dataType: 'json',
+                success: function(response) {
+                    const data = response;
+                    if (data.success) {
+                        messageDiv.removeClass('alert-danger').addClass('alert-success')
+                            .html('Profile updated successfully!')
+                            .show();
+                        
+                        // Update profile display
+                        $('#profileName, #profileUsernameTag').text(username);
+                        $('#profileUsernameTag').text('@' + username);
+                        $('#profileBio').text(bio);
+                        
+                        // Close modal after 1.5 seconds
+                        setTimeout(function() {
+                            $('#editProfileModal').modal('hide');
+                            messageDiv.hide();
+                        }, 1500);
+                    } else {
+                        messageDiv.removeClass('alert-success').addClass('alert-danger')
+                            .html(data.message || 'An error occurred while updating profile.')
+                            .show();
+                    }
+                },
+                error: function() {
+                    messageDiv.removeClass('alert-success').addClass('alert-danger')
+                        .html('An error occurred while updating profile.')
+                        .show();
+                }
+            });
+        });
+
+        // Clear message when modal is closed
+        $('#editProfileModal').on('hidden.bs.modal', function() {
+            $('#editProfileMessage').hide();
+        });
+
+        // Delete Account Button Click
+        $('#deleteAccountBtn').click(function() {
+            $('#deleteAccountModal').modal('show');
+        });
+        $('#confirmDeleteAccountBtn').click(function() {
+            const messageDiv = $('#deleteAccountMessage');
+            messageDiv.hide();
+            $.ajax({
+                url: 'delete-account.php',
+                method: 'POST',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        messageDiv.removeClass('alert-danger').addClass('alert-success')
+                            .html('Hesabınız silindi. Yönlendiriliyorsunuz...')
+                            .show();
+                        setTimeout(function() {
+                            window.location.href = 'index.php';
+                        }, 2000);
+                    } else {
+                        messageDiv.removeClass('alert-success').addClass('alert-danger')
+                            .html(response.message || 'Bir hata oluştu.')
+                            .show();
+                    }
+                },
+                error: function() {
+                    messageDiv.removeClass('alert-success').addClass('alert-danger')
+                        .html('Bir hata oluştu.')
+                        .show();
+                }
+            });
+        });
+    });
+    </script>
+
+    <!-- Delete Account Modal -->
+    <?php if ($isOwnProfile): ?>
+    <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteAccountModalLabel">Delete Account</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete your account? This action cannot be undone and all your data will be deleted.</p>
+                    <div id="deleteAccountMessage" class="alert" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteAccountBtn">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
     </div>
     <?php endif; ?>
 </body>

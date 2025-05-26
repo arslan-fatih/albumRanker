@@ -177,7 +177,7 @@ $genres = $stmt->fetchAll();
 ?>
 
 <!-- Hero/Banner Area Discover'daki gibi -->
-<section class="hero-area bg-img bg-overlay" style="background-image: url('https://www.chapmanarchitects.co.uk/wp-content/uploads/2017/08/Abbey_Road_4.jpg'); min-height: 340px; display: flex; align-items: center; position: relative;">
+<section class="hero-area bg-img bg-overlay" style="background-image: url('https://images.pexels.com/photos/257904/pexels-photo-257904.jpeg'); min-height: 340px; display: flex; align-items: center; position: relative;">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-12 col-md-8">
@@ -217,6 +217,16 @@ $genres = $stmt->fetchAll();
                 <label for="cover_url" class="form-label">Cover Image URL</label>
                 <input type="url" class="form-control" id="cover_url" name="cover_url" required placeholder="https://..." value="<?php echo isset($_POST['cover_url']) ? h($_POST['cover_url']) : ''; ?>">
                 <div class="invalid-feedback">Please enter a valid cover image URL.</div>
+                <div class="form-text text-warning mt-2">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Copyright Notice:</strong> By uploading an album cover, you confirm that:
+                    <ul class="mb-0 mt-2">
+                        <li>You have the right to use this image</li>
+                        <li>The image will be used for informational and review purposes only</li>
+                        <li>No commercial use is intended</li>
+                        <li>You understand and agree to our <a href="copyright.php">Copyright & Usage Rights</a> policy</li>
+                    </ul>
+                </div>
             </div>
             
             <div class="mb-3">

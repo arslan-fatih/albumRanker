@@ -147,12 +147,16 @@ function deleteAlbum($albumId, $userId) {
     }
 }
 
-// Get album details
+/**
+ * Get detailed information about an album
+ * @param int $albumId The ID of the album to get details for
+ * @return array|null Album details or null if not found
+ */
 function getAlbumDetails($albumId) {
     global $conn;
     
     try {
-        // Get album info
+        // Get album information including uploader and rating stats
         $stmt = $conn->prepare("
             SELECT a.*, u.username as uploader,
                    (SELECT AVG(rating) FROM ratings WHERE album_id = a.id) as avg_rating,
@@ -169,7 +173,7 @@ function getAlbumDetails($albumId) {
             return null;
         }
         
-        // Get genres
+        // Get album genres
         $stmt = $conn->prepare("
             SELECT g.*
             FROM genres g
@@ -179,7 +183,7 @@ function getAlbumDetails($albumId) {
         $stmt->execute([$albumId]);
         $album['genres'] = $stmt->fetchAll();
         
-        // Get tracks
+        // Get album tracks
         $stmt = $conn->prepare("
             SELECT *
             FROM tracks
@@ -196,7 +200,13 @@ function getAlbumDetails($albumId) {
     }
 }
 
-// Rate album
+/**
+ * Rate an album
+ * @param int $userId User ID
+ * @param int $albumId Album ID
+ * @param float $rating Rating value
+ * @return array Success status and message
+ */
 function rateAlbum($userId, $albumId, $rating) {
     global $conn;
     
@@ -215,7 +225,13 @@ function rateAlbum($userId, $albumId, $rating) {
     }
 }
 
-// Add review
+/**
+ * Add a review for an album
+ * @param int $userId User ID
+ * @param int $albumId Album ID
+ * @param string $content Review content
+ * @return array Success status and message
+ */
 function addReview($userId, $albumId, $content) {
     global $conn;
     
@@ -233,13 +249,20 @@ function addReview($userId, $albumId, $content) {
     }
 }
 
-// Get album reviews
+/**
+ * Get album reviews with pagination
+ * @param int $albumId Album ID
+ * @param int $page Page number
+ * @param int $limit Reviews per page
+ * @return array Reviews, total count and page count
+ */
 function getAlbumReviews($albumId, $page = 1, $limit = 10) {
     global $conn;
     
     try {
         $offset = ($page - 1) * $limit;
         
+        // Get reviews with user information
         $stmt = $conn->prepare("
             SELECT r.*, u.username, u.profile_pic
             FROM reviews r
@@ -251,7 +274,7 @@ function getAlbumReviews($albumId, $page = 1, $limit = 10) {
         $stmt->execute([$albumId, $limit, $offset]);
         $reviews = $stmt->fetchAll();
         
-        // Get total count
+        // Get total review count
         $stmt = $conn->prepare("SELECT COUNT(*) FROM reviews WHERE album_id = ?");
         $stmt->execute([$albumId]);
         $total = $stmt->fetchColumn();

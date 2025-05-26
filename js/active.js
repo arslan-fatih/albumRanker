@@ -3,24 +3,25 @@
 
     var browserWindow = $(window);
 
-    // :: 1.0 Preloader Active Code
+    // :: 1.0 Preloader Animation
     browserWindow.on('load', function () {
         $('.preloader').fadeOut('slow', function () {
             $(this).remove();
         });
     });
 
-    // :: 2.0 Nav Active Code
+    // :: 2.0 Navigation Menu
     if ($.fn.classyNav) {
         $('#oneMusicNav').classyNav();
     }
 
-    // :: 3.0 Sliders Active Code
+    // :: 3.0 Carousel Sliders
     if ($.fn.owlCarousel) {
         var welcomeSlide = $('.hero-slides');
         var testimonials = $('.testimonials-slide');
         var albumSlides = $('.albums-slideshow');
 
+        // Hero Section Slider
         welcomeSlide.owlCarousel({
             items: 1,
             margin: 0,
@@ -34,6 +35,7 @@
             animateOut: 'fadeOut'
         });
 
+        // Animation handling for slider transitions
         welcomeSlide.on('translate.owl.carousel', function () {
             var slideLayer = $("[data-animation]");
             slideLayer.each(function () {
@@ -50,11 +52,13 @@
             });
         });
 
+        // Animation delay settings
         $("[data-delay]").each(function () {
             var anim_del = $(this).data('delay');
             $(this).css('animation-delay', anim_del);
         });
 
+        // Animation duration settings
         $("[data-duration]").each(function () {
             var anim_dur = $(this).data('duration');
             $(this).css('animation-duration', anim_dur);
@@ -131,7 +135,7 @@
         });
     }
 
-    // :: 6.0 ScrollUp Active Code
+    // :: 6.0 ScrollUp Button
     if ($.fn.scrollUp) {
         browserWindow.scrollUp({
             scrollSpeed: 1500,
@@ -139,7 +143,7 @@
         });
     }
 
-    // :: 7.0 CounterUp Active Code
+    // :: 7.0 Counter Animation
     if ($.fn.counterUp) {
         $('.counter').counterUp({
             delay: 10,
@@ -147,14 +151,14 @@
         });
     }
 
-    // :: 8.0 Sticky Active Code
+    // :: 8.0 Sticky Navigation
     if ($.fn.sticky) {
         $(".oneMusic-main-menu").sticky({
             topSpacing: 0
         });
     }
 
-    // :: 9.0 Progress Bar Active Code
+    // :: 9.0 Progress Bar Animation
     if ($.fn.circleProgress) {
         $('#circle').circleProgress({
             size: 160,
@@ -186,27 +190,27 @@
         });
     }
 
-    // :: 10.0 audioPlayer Active Code
+    // :: 10.0 Audio Player
     if ($.fn.audioPlayer) {
         $('audio').audioPlayer();
     }
 
-    // :: 11.0 Tooltip Active Code
+    // :: 11.0 Tooltip Initialization
     if ($.fn.tooltip) {
         $('[data-toggle="tooltip"]').tooltip()
     }
 
-    // :: 12.0 prevent default a click
+    // :: 12.0 Prevent Default Anchor Click
     $('a[href="#"]').on('click', function ($) {
         $.preventDefault();
     });
 
-    // :: 13.0 wow Active Code
+    // :: 13.0 WOW Animation
     if (browserWindow.width() > 767) {
         new WOW().init();
     }
     
-    // :: 14.0 Gallery Menu Active Code
+    // :: 14.0 Category Menu Active State
     $('.catagory-menu a').on('click', function () {
         $('.catagory-menu a').removeClass('active');
         $(this).addClass('active');
