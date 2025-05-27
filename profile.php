@@ -1,6 +1,13 @@
 <?php session_start(); ?>
 <?php
 require_once 'config.php';
+require_once 'includes/functions.php'; // Make sure functions are included
+
+// Check if user is logged in
+if (!isLoggedIn()) {
+    header('Location: login.php');
+    exit();
+}
 
 // Eğer user parametresi varsa, o kullanıcıyı göster
 if (isset($_GET['user'])) {
@@ -32,10 +39,11 @@ if (isset($_GET['user'])) {
     }
 }
 
-// Kullanıcının yüklediği albüm sayısını çek
-$stmtAlbumCount = $conn->prepare("SELECT COUNT(*) FROM albums WHERE user_id = ?");
-$stmtAlbumCount->execute([$user['id']]);
-$albumCount = $stmtAlbumCount->fetchColumn();
+// Kullanıcı istatistiklerini çek (albüm, takipçi, takip edilen sayısı)
+$userStats = getUserStats($user['id']);
+$albumCount = $userStats['album_count'];
+$followerCount = $userStats['follower_count'];
+$followingCount = $userStats['following_count'];
 
 $isOwnProfile = isset($_SESSION['user_id']) && $user['id'] == $_SESSION['user_id'];
 $isFollowing = false;
@@ -52,7 +60,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
     ?>
     <section class="hero-area bg-img bg-overlay" style="background-image: url('https://images.pexels.com/photos/257904/pexels-photo-257904.jpeg'); min-height: 340px; display: flex; align-items: center; position: relative;">
         <div class="bradcumbContent">
-            <p>User Profile</p>
+            
             <h2 id="profileUsername"><?php echo htmlspecialchars($user['username']); ?></h2>
         </div>
     </section>
@@ -62,18 +70,11 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                 <div class="col-12 col-lg-4">
                     <div class="profile-info">
                         <div class="profile-pic text-center mb-30">
-                            <img id="profilePic" src="<?php 
-                                $profilePicPath = 'uploads/profile/' . $user['profile_pic'];
-                                if ($user['profile_pic'] && $user['profile_pic'] !== 'default.jpg' && file_exists($profilePicPath)) {
-                                    echo htmlspecialchars($profilePicPath);
-                                } else {
-                                    echo 'img/core-img/default.jpg';
-                                }
-                            ?>" alt="Profile Picture" class="rounded-circle" style="width: 200px; height: 200px; object-fit: cover;">
+                            <img id="profilePic" src="<?php echo htmlspecialchars(getProfilePicturePath($user['profile_pic'])); ?>" alt="Profile Picture" class="rounded-circle" style="width: 200px; height: 200px; object-fit: cover;">
                             <?php if (isset(
                                 $isOwnProfile
                             ) && $isOwnProfile): ?>
-                                <?php if ($user['profile_pic']): ?>
+                                <?php if ($user['profile_pic'] && $user['profile_pic'] !== 'default.jpg'): ?>
                                     <button type="button" class="btn btn-outline-secondary mt-3" id="editProfilePicBtn">Edit Profile Picture</button>
                                 <?php else: ?>
                                     <button type="button" class="btn btn-primary mt-3" id="editProfilePicBtn">Add Profile Picture</button>
@@ -87,7 +88,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                       </div>
                                       <div class="modal-body text-center">
                                         <button type="button" class="btn btn-outline-primary w-100 mb-2" id="changeProfilePicBtn">Change Profile Picture</button>
-                                        <?php if ($user['profile_pic']): ?>
+                                        <?php if ($user['profile_pic'] && $user['profile_pic'] !== 'default.jpg'): ?>
                                         <button type="button" class="btn btn-outline-danger w-100" id="removeProfilePicBtn">Remove Profile Picture</button>
                                         <?php endif; ?>
                                         <form id="profilePictureForm" enctype="multipart/form-data" class="mt-3" style="display:none;">
@@ -119,21 +120,13 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                             </div>
                             <div class="stat-item">
                                 <a href="followers.php?user_id=<?php echo $user['id']; ?>&type=followers" class="text-decoration-none">
-                                    <span class="stat-value"><?php 
-                                        $stmt = $conn->prepare("SELECT COUNT(*) FROM followers WHERE following_id = ?");
-                                        $stmt->execute([$user['id']]);
-                                        echo $stmt->fetchColumn();
-                                    ?></span>
+                                    <span class="stat-value"><?php echo $followerCount; ?></span>
                                     <span class="stat-label">Followers</span>
                                 </a>
                             </div>
                             <div class="stat-item">
                                 <a href="followers.php?user_id=<?php echo $user['id']; ?>&type=following" class="text-decoration-none">
-                                    <span class="stat-value"><?php 
-                                        $stmt = $conn->prepare("SELECT COUNT(*) FROM followers WHERE follower_id = ?");
-                                        $stmt->execute([$user['id']]);
-                                        echo $stmt->fetchColumn();
-                                    ?></span>
+                                    <span class="stat-value"><?php echo $followingCount; ?></span>
                                     <span class="stat-label">Following</span>
                                 </a>
                             </div>
@@ -250,7 +243,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                 </div>
                             </div>
                             <div class="tab-pane fade" id="favorites" role="tabpanel">
-                                <div class="row" id="userFavorites">
+                                <div class="row">
                                     <?php
                                     $stmt = $conn->prepare("SELECT a.* FROM favorites f JOIN albums a ON f.album_id = a.id WHERE f.user_id = ? ORDER BY f.created_at DESC");
                                     $stmt->execute([$user['id']]);
@@ -287,7 +280,7 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                         foreach ($followers as $follower) {
                                     ?>
                                     <li class="list-group-item d-flex align-items-center">
-                                        <img src="<?php echo htmlspecialchars($follower['profile_pic'] && $follower['profile_pic'] !== 'default.jpg' ? 'uploads/profile/' . $follower['profile_pic'] : 'img/core-img/default.jpg'); ?>" class="rounded-circle me-2" alt="Profil" style="width:32px;height:32px;object-fit:cover;">
+                                        <img src="<?php echo htmlspecialchars(getProfilePicturePath($follower['profile_pic'])); ?>" class="rounded-circle me-2" alt="Profil" style="width:32px;height:32px;object-fit:cover;">
                                         <a href="profile.php?user=<?php echo $follower['id']; ?>" class="text-decoration-none"><?php echo htmlspecialchars($follower['username']); ?></a>
                                     </li>
                                     <?php }} else { echo '<li class="list-group-item text-center">No followers.</li>'; } ?>
@@ -303,17 +296,9 @@ if (!$isOwnProfile && isset($_SESSION['user_id'])) {
                                         foreach ($followed as $f) {
                                     ?>
                                     <li class="list-group-item d-flex align-items-center">
-<?php
-$profilePicPath = 'uploads/profile/' . $f['profile_pic'];
-if ($f['profile_pic'] && $f['profile_pic'] !== 'default.jpg' && file_exists($profilePicPath)) {
-    $imgSrc = $profilePicPath;
-} else {
-    $imgSrc = 'img/core-img/default.jpg';
-}
-?>
-<img src="<?php echo htmlspecialchars($imgSrc); ?>" class="rounded-circle me-2" alt="Profil" style="width:32px;height:32px;object-fit:cover;">
-<a href="profile.php?user=<?php echo $f['id']; ?>" class="text-decoration-none"><?php echo htmlspecialchars($f['username']); ?></a>
-</li>
+                                        <img src="<?php echo htmlspecialchars(getProfilePicturePath($f['profile_pic'])); ?>" class="rounded-circle me-2" alt="Profil" style="width:32px;height:32px;object-fit:cover;">
+                                        <a href="profile.php?user=<?php echo $f['id']; ?>" class="text-decoration-none"><?php echo htmlspecialchars($f['username']); ?></a>
+                                    </li>
                                     <?php }} else { echo '<li class="list-group-item text-center">No following.</li>'; } ?>
                                 </ul>
                             </div>
@@ -323,187 +308,27 @@ if ($f['profile_pic'] && $f['profile_pic'] !== 'default.jpg' && file_exists($pro
             </div>
         </div>
     </section>
-    <footer class="footer-area">
-        <div class="container">
-            <div class="row d-flex flex-wrap align-items-center">
-                <div class="col-12 col-md-6">
-                    <a href="#"><span style="font-size:1.5rem;font-weight:bold;color:#fff;letter-spacing:2px;">AlbumRanker</span></a>
-                    <p class="copywrite-text"><a href="#">Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | AlbumRanker</a></p>
-                </div>
-                <div class="col-12 col-md-6">
-                    <div class="footer-nav">
-                        <ul>
-                            <li><a href="index.php">Home</a></li>
-                            <li><a href="albums-store.php">Discover</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </footer>
-    <script src="js/jquery/jquery-2.2.4.min.js"></script>
-    <script src="js/bootstrap/popper.min.js"></script>
-    <script src="js/bootstrap/bootstrap.min.js"></script>
-    <script src="js/plugins/plugins.js"></script>
-    <script src="js/active.js"></script>
-    <script src="js/main.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // --- PROFİL FOTOĞRAF DEĞİŞKENLERİ ---
-        const form = document.getElementById('profilePictureForm');
-        const fileInput = document.getElementById('profilePicture');
-        const message = document.getElementById('profilePicMessage');
-        const profilePic = document.getElementById('profilePic');
-        const profilePicModal = document.getElementById('profilePicModal');
-        if (profilePicModal) {
-            profilePicModal.addEventListener('hidden.bs.modal', function () {
-                if (form) {
-                    form.style.display = 'none';
-                    form.reset();
-                }
-                if (message) message.innerHTML = '';
-            });
-        }
-        // Takip Et / Takipten Çık butonu
-        document.querySelectorAll('.follow-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var userId = this.getAttribute('data-user-id');
-                var button = this;
-                fetch('follow.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: 'user_id=' + encodeURIComponent(userId)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        button.textContent = data.following ? 'Unfollow' : 'Follow';
-                    } else {
-                        alert(data.message || 'Bir hata oluştu.');
-                    }
-                })
-                .catch(() => alert('Bir hata oluştu.'));
-            });
-        });
 
-        const editBtn = document.getElementById('editProfilePicBtn');
-        const modal = new bootstrap.Modal(document.getElementById('profilePicModal'));
-        const changeBtn = document.getElementById('changeProfilePicBtn');
-        const removeBtn = document.getElementById('removeProfilePicBtn');
-        if (editBtn) {
-            editBtn.addEventListener('click', function() {
-                modal.show();
-            });
-        }
-        if (changeBtn) {
-            changeBtn.addEventListener('click', function() {
-                form.style.display = 'block';
-            });
-        }
-        if (removeBtn) {
-            removeBtn.addEventListener('click', function() {
-                fetch('upload.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: 'action=remove_profile'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('profilePic').src = 'img/core-img/default.jpg';
-                        modal.hide();
-                    } else {
-                        alert(data.message);
-                    }
-                });
-            });
-        }
-
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        const maxSize = 5 * 1024 * 1024; // 5MB
-
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                if (!allowedTypes.includes(file.type)) {
-                    message.innerHTML = '<div class="alert alert-danger">Sadece JPG, PNG veya GIF dosyası yükleyebilirsiniz.</div>';
-                    fileInput.value = '';
-                    return;
-                }
-                if (file.size > maxSize) {
-                    message.innerHTML = '<div class="alert alert-danger">Dosya boyutu 5MB\'dan büyük olamaz.</div>';
-                    fileInput.value = '';
-                    return;
-                }
-            }
-        });
-
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const file = fileInput.files[0];
-            if (!file) {
-                message.innerHTML = '<div class="alert alert-danger">Lütfen bir dosya seçin.</div>';
-                return;
-            }
-            const formData = new FormData();
-            formData.append('action', 'upload_profile');
-            formData.append('profile', file);
-            message.innerHTML = '<div class="alert alert-info">Uploading...</div>';
-            fetch('upload.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    message.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
-                }
-            })
-            .catch(error => {
-                message.innerHTML = '<div class="alert alert-danger">Bir hata oluştu. Lütfen tekrar deneyin.</div>';
-            });
-        });
-
-        let albumToDelete = null;
-        const deleteAlbumModal = document.getElementById('deleteAlbumModal');
-        const confirmDeleteAlbumBtn = document.getElementById('confirmDeleteAlbumBtn');
-        if (deleteAlbumModal && confirmDeleteAlbumBtn) {
-            document.querySelectorAll('.delete-album-btn-custom').forEach(function(btn) {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    albumToDelete = this.getAttribute('data-album-id');
-                    var modal = new bootstrap.Modal(deleteAlbumModal);
-                    modal.show();
-                });
-            });
-            confirmDeleteAlbumBtn.addEventListener('click', function() {
-                if (albumToDelete) {
-                    window.location.href = 'delete-album.php?id=' + albumToDelete;
-                }
-            });
-        }
-    });
-    </script>
-    <!-- Delete Confirmation Modal -->
-    <?php if ($isOwnProfile): ?>
-    <div class="modal fade" id="deleteAlbumModal" tabindex="-1" aria-labelledby="deleteAlbumModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <!-- Modal for Delete Account Confirmation -->
+    <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-          <div class="modal-header border-0">
-            <h5 class="modal-title w-100 text-center" id="deleteAlbumModalLabel">Delete Album</h5>
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteAccountModalLabel">Confirm Account Deletion</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
           </div>
-          <div class="modal-body text-center">
-            Are you sure you want to delete this album?
+          <div class="modal-body">
+            Are you sure you want to delete your account? This action cannot be undone.
           </div>
-          <div class="modal-footer justify-content-center border-0">
-            <button type="button" class="btn btn-danger" id="confirmDeleteAlbumBtn">Delete</button>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteAccountBtn">Delete Account</button>
           </div>
         </div>
       </div>
     </div>
-    <?php endif; ?>
 
     <!-- Profile Edit Modal -->
     <?php if ($isOwnProfile): ?>
@@ -532,135 +357,317 @@ if ($f['profile_pic'] && $f['profile_pic'] !== 'default.jpg' && file_exists($pro
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" form="editProfileForm" class="btn btn-primary">Save Changes</button>
                 </div>
             </div>
         </div>
     </div>
     <?php endif; ?>
 
+
+    <?php require_once 'includes/footer.php'; ?> 
+
+    <!-- **** All JS Files ***** -->
+    <!-- jQuery-2.2.4 js -->
+    <script src="js/jquery/jquery-2.2.4.min.js"></script>
+    <!-- Popper js -->
+    <script src="js/bootstrap/popper.min.js"></script>
+    <!-- Bootstrap js -->
+    <script src="js/bootstrap/bootstrap.min.js"></script>
+    <!-- All Plugins js -->
+    <script src="js/plugins/plugins.js"></script>
+    <!-- Active js -->
+    <script src="js/active.js"></script>
+    <!-- Custom JS for Profile Page -->
     <script>
-    $(document).ready(function() {
-        // Edit Profile Button Click
-        $('#editProfileBtn').click(function() {
-            $('#editProfileModal').modal('show');
-        });
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- PROFİL FOTOĞRAF MODALI VE İŞLEMLERİ ---
+        const profilePicModal = document.getElementById('profilePicModal');
+        const editProfilePicBtn = document.getElementById('editProfilePicBtn');
+        const changeProfilePicBtn = document.getElementById('changeProfilePicBtn');
+        const removeProfilePicBtn = document.getElementById('removeProfilePicBtn');
+        const profilePictureForm = document.getElementById('profilePictureForm');
+        const profilePictureInput = document.getElementById('profilePicture');
+        const profilePicMessage = document.getElementById('profilePicMessage');
+        const profilePicImg = document.getElementById('profilePic');
 
-        // Save Profile Changes
-        $('#saveProfileBtn').click(function() {
-            const username = $('#editUsername').val().trim();
-            const bio = $('#editBio').val().trim();
-            const messageDiv = $('#editProfileMessage');
+        if (profilePicModal) {
+            const modal = new bootstrap.Modal(profilePicModal);
 
-            // Validate username
-            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                messageDiv.removeClass('alert-success').addClass('alert-danger')
-                    .html('Username can only contain letters, numbers, and underscores.')
-                    .show();
-                return;
+            if (editProfilePicBtn) {
+                editProfilePicBtn.addEventListener('click', function() {
+                    modal.show();
+                });
             }
 
-            // Send AJAX request
-            $.ajax({
-                url: 'update-profile.php',
-                method: 'POST',
-                data: {
-                    username: username,
-                    bio: bio
-                },
-                dataType: 'json',
-                success: function(response) {
-                    const data = response;
-                    if (data.success) {
-                        messageDiv.removeClass('alert-danger').addClass('alert-success')
-                            .html('Profile updated successfully!')
-                            .show();
-                        
-                        // Update profile display
-                        $('#profileName, #profileUsernameTag').text(username);
-                        $('#profileUsernameTag').text('@' + username);
-                        $('#profileBio').text(bio);
-                        
-                        // Close modal after 1.5 seconds
-                        setTimeout(function() {
-                            $('#editProfileModal').modal('hide');
-                            messageDiv.hide();
-                        }, 1500);
-                    } else {
-                        messageDiv.removeClass('alert-success').addClass('alert-danger')
-                            .html(data.message || 'An error occurred while updating profile.')
-                            .show();
+            if (changeProfilePicBtn) {
+                changeProfilePicBtn.addEventListener('click', function() {
+                    if (profilePictureForm) profilePictureForm.style.display = 'block';
+                    if (profilePicMessage) profilePicMessage.innerHTML = ''; // Clear previous messages
+                });
+            }
+
+            if (removeProfilePicBtn) {
+                removeProfilePicBtn.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to remove your profile picture?')) {
+                        fetch('upload.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: 'action=remove_profile'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Update the image source to default
+                                if (profilePicImg) profilePicImg.src = 'img/core-img/default.jpg';
+                                // Hide the remove button as there is no custom pic anymore
+                                if (removeProfilePicBtn) removeProfilePicBtn.style.display = 'none';
+                                // Optionally, change the edit button text
+                                if (editProfilePicBtn) editProfilePicBtn.textContent = 'Add Profile Picture';
+                                modal.hide();
+                                // Sayfayı yenile
+                                setTimeout(() => { window.location.reload(); }, 1000);
+                            } else {
+                                alert(data.message || 'Error removing profile picture.');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while removing the profile picture.');
+                        });
                     }
-                },
-                error: function() {
-                    messageDiv.removeClass('alert-success').addClass('alert-danger')
-                        .html('An error occurred while updating profile.')
-                        .show();
+                });
+            }
+
+            if (profilePictureForm) {
+                 profilePictureForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const file = profilePictureInput.files[0];
+                    if (!file) {
+                        if (profilePicMessage) profilePicMessage.innerHTML = '<div class="alert alert-danger">Lütfen bir dosya seçin.</div>';
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('action', 'upload_profile');
+                    formData.append('profile', file);
+
+                    if (profilePicMessage) profilePicMessage.innerHTML = '<div class="alert alert-info">Uploading...</div>';
+
+                    fetch('upload.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update the image source
+                            if (profilePicImg) profilePicImg.src = data.file + '?t=' + new Date().getTime(); // Add timestamp to bust cache
+                            if (profilePicMessage) profilePicMessage.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
+                            // Show the remove button if it was hidden
+                            if (removeProfilePicBtn) removeProfilePicBtn.style.display = 'block';
+                            // Optionally, change the edit button text
+                            if (editProfilePicBtn) editProfilePicBtn.textContent = 'Edit Profile Picture';
+                            // Hide the file input form after successful upload
+                            profilePictureForm.style.display = 'none';
+                            // Sayfayı yenile
+                            setTimeout(() => { window.location.reload(); }, 1000);
+                        } else {
+                            if (profilePicMessage) profilePicMessage.innerHTML = '<div class="alert alert-danger">' + (data.message || 'An error occurred during upload.') + '</div>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        if (profilePicMessage) profilePicMessage.innerHTML = '<div class="alert alert-danger">An error occurred. Please try again.</div>';
+                    });
+                });
+            }
+
+            // Clear form and message when modal is closed
+            profilePicModal.addEventListener('hidden.bs.modal', function () {
+                if (profilePictureForm) {
+                    profilePictureForm.style.display = 'none';
+                    profilePictureForm.reset();
                 }
+                if (profilePicMessage) profilePicMessage.innerHTML = '';
             });
-        });
+        }
 
-        // Clear message when modal is closed
-        $('#editProfileModal').on('hidden.bs.modal', function() {
-            $('#editProfileMessage').hide();
-        });
+        // --- PROFİL DÜZENLEME MODALI VE İŞLEMLERİ ---
+        const editProfileModal = document.getElementById('editProfileModal');
+        const editProfileBtn = document.getElementById('editProfileBtn');
+        const editProfileForm = document.getElementById('editProfileForm');
+        const editProfileMessage = document.getElementById('editProfileMessage');
+        const profileUsernameElement = document.getElementById('profileUsername');
+        const profileNameElement = document.getElementById('profileName');
+        const profileUsernameTagElement = document.getElementById('profileUsernameTag');
+        const profileBioElement = document.getElementById('profileBio');
 
-        // Delete Account Button Click
-        $('#deleteAccountBtn').click(function() {
-            $('#deleteAccountModal').modal('show');
-        });
-        $('#confirmDeleteAccountBtn').click(function() {
-            const messageDiv = $('#deleteAccountMessage');
-            messageDiv.hide();
-            $.ajax({
-                url: 'delete-account.php',
-                method: 'POST',
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        messageDiv.removeClass('alert-danger').addClass('alert-success')
-                            .html('Hesabınız silindi. Yönlendiriliyorsunuz...')
-                            .show();
-                        setTimeout(function() {
-                            window.location.href = 'index.php';
-                        }, 2000);
+        if (editProfileModal && editProfileBtn && editProfileForm) {
+             const modalEdit = new bootstrap.Modal(editProfileModal);
+
+             editProfileBtn.addEventListener('click', function() {
+                 // Set initial values in the form (already done by PHP)
+                 // const usernameInput = document.getElementById('editUsername');
+                 // const bioInput = document.getElementById('editBio');
+                 // if (usernameInput && profileUsernameElement) usernameInput.value = profileUsernameElement.textContent;
+                 // if (bioInput && profileBioElement) bioInput.value = profileBioElement.textContent;
+                 
+                 modalEdit.show();
+             });
+
+             editProfileForm.addEventListener('submit', function(e) {
+                 e.preventDefault();
+
+                 if (editProfileMessage) {
+                     editProfileMessage.style.display = 'none';
+                     editProfileMessage.className = 'alert';
+                     editProfileMessage.textContent = '';
+                 }
+
+                 const formData = new FormData(editProfileForm);
+
+                 fetch('update-profile.php', {
+                     method: 'POST',
+                     body: formData
+                 })
+                 .then(response => response.json())
+                 .then(data => {
+                     if (editProfileMessage) {
+                         editProfileMessage.style.display = 'block';
+                         editProfileMessage.textContent = data.message;
+                         if (data.success) {
+                             editProfileMessage.className = 'alert alert-success';
+                             // Update profile info on the page
+                             if (profileUsernameElement && data.username) profileUsernameElement.textContent = data.username;
+                             if (profileNameElement && data.username) profileNameElement.textContent = data.username; // Assuming profileName is same as username
+                             if (profileUsernameTagElement && data.username) profileUsernameTagElement.textContent = '@' + data.username;
+                             if (profileBioElement && data.bio !== undefined) profileBioElement.textContent = data.bio; // Use data.bio for bio
+
+                             // Close modal after successful update (optional)
+                             // setTimeout(() => { modalEdit.hide(); }, 1000);
+                         } else {
+                             editProfileMessage.className = 'alert alert-danger';
+                         }
+                     }
+                 })
+                 .catch(error => {
+                     console.error('Error:', error);
+                     if (editProfileMessage) {
+                         editProfileMessage.style.display = 'block';
+                         editProfileMessage.className = 'alert alert-danger';
+                         editProfileMessage.textContent = 'An error occurred. Please try again.';
+                     }
+                 });
+             });
+
+              // Clear message when modal is closed
+            editProfileModal.addEventListener('hidden.bs.modal', function () {
+                 if (editProfileMessage) {
+                     editProfileMessage.style.display = 'none';
+                     editProfileMessage.className = 'alert';
+                     editProfileMessage.textContent = '';
+                 }
+            });
+        }
+
+        // --- HESAP SİLME İŞLEMLERİ ---
+        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+        const confirmDeleteAccountBtn = document.getElementById('confirmDeleteAccountBtn');
+        const deleteAccountModal = document.getElementById('deleteAccountModal');
+
+        if (deleteAccountBtn && deleteAccountModal && confirmDeleteAccountBtn) {
+            const modalDelete = new bootstrap.Modal(deleteAccountModal);
+
+            deleteAccountBtn.addEventListener('click', function() {
+                modalDelete.show();
+            });
+
+            confirmDeleteAccountBtn.addEventListener('click', function() {
+                // Perform account deletion via AJAX
+                fetch('upload.php', { // Assuming upload.php handles account deletion
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'action=delete_account' // Assuming 'delete_account' action
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message || 'Account deleted successfully.');
+                        window.location.href = 'index.php'; // Redirect to homepage or login page
                     } else {
-                        messageDiv.removeClass('alert-success').addClass('alert-danger')
-                            .html(response.message || 'Bir hata oluştu.')
-                            .show();
+                        alert(data.message || 'Error deleting account.');
                     }
-                },
-                error: function() {
-                    messageDiv.removeClass('alert-success').addClass('alert-danger')
-                        .html('Bir hata oluştu.')
-                        .show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the account.');
+                });
+                modalDelete.hide();
+            });
+        }
+
+         // --- FOLLOW/UNFOLLOW İŞLEMLERİ ---
+         document.querySelectorAll('.follow-btn').forEach(function(button) {
+             button.addEventListener('click', function() {
+                 const userIdToFollow = this.getAttribute('data-user-id');
+                 const currentButton = this;
+
+                 fetch('follow.php', {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                     body: 'user_id=' + encodeURIComponent(userIdToFollow)
+                 })
+                 .then(response => response.json())
+                 .then(data => {
+                     if (data.success) {
+                         // Update button text based on new follow status
+                         currentButton.textContent = data.following ? 'Unfollow' : 'Follow';
+                         // Optional: Update follower count on the page without full reload
+                         // This would require an element to display the follower count and updating it here
+                     } else {
+                         alert(data.message || 'Bir hata oluştu.');
+                     }
+                 })
+                 .catch(error => {
+                     console.error('Error:', error);
+                     alert('Bir hata oluştu.');
+                 });
+             });
+         });
+
+        // --- ALBUM SİLME İŞLEMLERİ ---
+        document.querySelectorAll('.delete-album-btn-custom').forEach(function(button) {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const albumIdToDelete = this.getAttribute('data-album-id');
+                if (confirm('Are you sure you want to delete this album?')) {
+                    fetch('upload.php', { // Assuming upload.php handles album deletion
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'action=delete_album&album_id=' + encodeURIComponent(albumIdToDelete)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message || 'Album deleted successfully.');
+                            // Remove the album card from the DOM
+                            const albumCard = button.closest('.col-12.col-md-6.col-lg-4.mb-4');
+                            if (albumCard) albumCard.remove();
+                        } else {
+                            alert(data.message || 'Error deleting album.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while deleting the album.');
+                    });
                 }
             });
         });
     });
     </script>
 
-    <!-- Delete Account Modal -->
-    <?php if ($isOwnProfile): ?>
-    <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteAccountModalLabel">Delete Account</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to delete your account? This action cannot be undone and all your data will be deleted.</p>
-                    <div id="deleteAccountMessage" class="alert" style="display: none;"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirmDeleteAccountBtn">Yes, Delete</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <?php endif; ?>
+<?php require_once 'includes/footer.php'; ?>

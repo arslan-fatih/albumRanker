@@ -1,6 +1,18 @@
 <?php
 /**
- * Form validation functions
+ * validation.php
+ * 
+ * Bu dosya, web sitesindeki form verilerinin doğrulama işlemlerini yapan fonksiyonları içerir.
+ * Tüm form gönderimlerinde kullanılan veri doğrulama ve güvenlik kontrollerini sağlar.
+ * 
+ * İçerik:
+ * 1. Albüm verilerinin doğrulaması
+ * 2. Yorum ve puanlama verilerinin doğrulaması
+ * 3. Kullanıcı verilerinin doğrulaması
+ * 4. Profil resmi yükleme doğrulaması
+ * 
+ * Her fonksiyon, ilgili veri türü için gerekli tüm kontrolleri yapar ve
+ * hata durumunda uygun hata mesajlarını döndürür.
  */
 
 function validateAlbumData($data) {

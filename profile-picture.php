@@ -59,6 +59,9 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        
         const formData = new FormData();
         formData.append('action', 'upload_profile');
         formData.append('profile', fileInput.files[0]);
@@ -73,17 +76,19 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 message.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
-                // Sayfayı 2 saniye sonra yenile
+                // Reload page after 2 seconds
                 setTimeout(() => {
                     window.location.reload();
                 }, 2000);
             } else {
                 message.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
+                submitButton.disabled = false;
             }
         })
         .catch(error => {
             message.innerHTML = '<div class="alert alert-danger">An error occurred. Please try again.</div>';
             console.error('Error:', error);
+            submitButton.disabled = false;
         });
     });
 });

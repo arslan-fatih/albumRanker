@@ -1,3 +1,14 @@
+/*
+ * Projeye özel ikon fontları için CSS tanımlamaları.
+ * Bu dosya, özelleştirilmiş "icomoon" font setini kullanır.
+ * Her bir ikon, '.icon-ikonadı' şeklinde bir CSS sınıfı ile tanımlanmıştır.
+ * İkonlar, içeriğin (content) unicode değeri aracılığıyla görüntülenir.
+ *
+ * Dikkat: Bu dosyadaki ikon sınıflarının kullanımı projenin farklı HTML/PHP/JS
+ * dosyalarına dağılmış olabilir. Kullanılmayan ikonları kaldırmak site görünümünü
+ * etkileyebilir. Değişiklik yapmadan önce dikkatli olunması önerilir.
+ */
+
 @font-face {
   font-family: 'icomoon';
   src:  url('../fonts/icomoon.eot?xracs4');
@@ -9,8 +20,9 @@
   font-style: normal;
 }
 
+/* Tüm ikon sınıfları için temel stil */
 [class^="icon-"], [class*=" icon-"] {
-  /* use !important to prevent issues with browser extensions that change fonts */
+  /* Tarayıcı uzantılarının fontları değiştirmesini önlemek için !important kullanın */
   font-family: 'icomoon' !important;
   speak: none;
   font-style: normal;
@@ -19,10 +31,12 @@
   text-transform: none;
   line-height: 1;
 
-  /* Better Font Rendering =========== */
+  /* Daha İyi Font İşleme =========== */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Aşağıda her bir ikon için özel sınıf tanımları yer almaktadır */
 
 .icon-alarm-clock:before {
   content: "\e900";

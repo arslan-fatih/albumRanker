@@ -7,13 +7,13 @@ header('Content-Type: application/json');
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Oturum açmanız gerekiyor.']);
+    echo json_encode(['success' => false, 'message' => 'You need to be logged in.']);
     exit;
 }
 
 // Check if user_id is provided
 if (!isset($_POST['user_id']) || !is_numeric($_POST['user_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Geçersiz kullanıcı ID.']);
+    echo json_encode(['success' => false, 'message' => 'Invalid user ID.']);
     exit;
 }
 
@@ -22,7 +22,7 @@ $following_id = (int)$_POST['user_id'];
 
 // Check if user is trying to follow themselves
 if ($follower_id === $following_id) {
-    echo json_encode(['success' => false, 'message' => 'Kendinizi takip edemezsiniz.']);
+    echo json_encode(['success' => false, 'message' => 'You cannot follow yourself.']);
     exit;
 }
 
@@ -36,15 +36,15 @@ try {
         // Unfollow
         $stmt = $conn->prepare("DELETE FROM followers WHERE follower_id = ? AND following_id = ?");
         $stmt->execute([$follower_id, $following_id]);
-        echo json_encode(['success' => true, 'following' => false, 'message' => 'Takipten çıkıldı.']);
+        echo json_encode(['success' => true, 'following' => false, 'message' => 'Unfollowed successfully.']);
     } else {
         // Follow
         $stmt = $conn->prepare("INSERT INTO followers (follower_id, following_id) VALUES (?, ?)");
         $stmt->execute([$follower_id, $following_id]);
-        echo json_encode(['success' => true, 'following' => true, 'message' => 'Takip edildi.']);
+        echo json_encode(['success' => true, 'following' => true, 'message' => 'Followed successfully.']);
     }
 } catch (PDOException $e) {
     // Log error and return generic message
     error_log("Follow error: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Bir hata oluştu.']);
+    echo json_encode(['success' => false, 'message' => 'An error occurred.']);
 } 

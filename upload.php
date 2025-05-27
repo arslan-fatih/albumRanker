@@ -9,6 +9,9 @@
 declare(strict_types=1);
 header('Content-Type: application/json');
 
+session_start();
+require_once 'config.php';
+
 $response = ['success' => false, 'message' => 'Unknown error'];
 
 try {
@@ -23,8 +26,6 @@ try {
        1) PROFİL FOTOĞRAFI SİLME (remove_profile)
     ------------------------------------------------------------ */
     if ($action === 'remove_profile') {
-        session_start();
-        require_once 'config.php'; // $conn (PDO)
         $userId = $_SESSION['user_id'] ?? null;
         if (!$userId) throw new RuntimeException('Not logged in');
 
@@ -97,8 +98,6 @@ try {
 
     /* ----- DB güncelle (profil) ----- */
     if ($action === 'upload_profile') {
-        session_start();
-        require_once 'config.php';
         $uid = $_SESSION['user_id'] ?? null;
         if ($uid) {
             // Yalnızca dosya adını kaydet
@@ -108,9 +107,7 @@ try {
     }
 
     // Yanıt
-    $relativePath = '/uploads/profile/'.$name;
-    if ($action==='upload_cover') $relativePath = '/uploads/cover/'.$name;
-    if ($action==='upload_track') $relativePath = '/uploads/tracks/'.$name;
+    $relativePath = str_replace(__DIR__, '', $s['dir']) . $name;
 
     $response['success'] = true;
     $response['file']    = $relativePath;

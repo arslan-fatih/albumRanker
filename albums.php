@@ -24,36 +24,16 @@ function createAlbum($userId, $data) {
         
         $albumId = $conn->lastInsertId();
         
-        // Insert genres
-        if (!empty($data['genres'])) {
-            $stmt = $conn->prepare("INSERT INTO album_genres (album_id, genre_id) VALUES (?, ?)");
-            foreach ($data['genres'] as $genreId) {
-                $stmt->execute([$albumId, $genreId]);
-            }
-        }
-        
-        // Insert tracks
-        if (!empty($data['tracks'])) {
-            $stmt = $conn->prepare("
-                INSERT INTO tracks (album_id, title, duration, track_number)
-                VALUES (?, ?, ?, ?)
-            ");
-            foreach ($data['tracks'] as $index => $track) {
-                $stmt->execute([
-                    $albumId,
-                    $track['title'],
-                    $track['duration'],
-                    $index + 1
-                ]);
-            }
-        }
+        // Insert genres and tracks using helper functions
+        insertGenres($conn, $albumId, $data['genres'] ?? []);
+        insertTracks($conn, $albumId, $data['tracks'] ?? []);
         
         $conn->commit();
-        return ['success' => true, 'message' => 'Album created successfully', 'album_id' => $albumId];
+        return ['success' => true, 'message' => SUCCESS_MESSAGES['ALBUM_CREATED'], 'album_id' => $albumId];
     } catch (PDOException $e) {
         $conn->rollBack();
         error_log($e->getMessage());
-        return ['success' => false, 'message' => 'Album creation failed'];
+        return ['success' => false, 'message' => ERROR_MESSAGES['ALBUM_CREATE_FAILED']];
     }
 }
 
@@ -62,11 +42,8 @@ function updateAlbum($albumId, $userId, $data) {
     global $conn;
     
     try {
-        // Verify ownership
-        $stmt = $conn->prepare("SELECT id FROM albums WHERE id = ? AND user_id = ?");
-        $stmt->execute([$albumId, $userId]);
-        if ($stmt->rowCount() === 0) {
-            return ['success' => false, 'message' => 'Unauthorized'];
+        if (!verifyAlbumOwnership($conn, $albumId, $userId)) {
+            return ['success' => false, 'message' => ERROR_MESSAGES['UNAUTHORIZED']];
         }
         
         $conn->beginTransaction();
@@ -89,39 +66,19 @@ function updateAlbum($albumId, $userId, $data) {
         // Update genres
         $stmt = $conn->prepare("DELETE FROM album_genres WHERE album_id = ?");
         $stmt->execute([$albumId]);
-        
-        if (!empty($data['genres'])) {
-            $stmt = $conn->prepare("INSERT INTO album_genres (album_id, genre_id) VALUES (?, ?)");
-            foreach ($data['genres'] as $genreId) {
-                $stmt->execute([$albumId, $genreId]);
-            }
-        }
+        insertGenres($conn, $albumId, $data['genres'] ?? []);
         
         // Update tracks
         $stmt = $conn->prepare("DELETE FROM tracks WHERE album_id = ?");
         $stmt->execute([$albumId]);
-        
-        if (!empty($data['tracks'])) {
-            $stmt = $conn->prepare("
-                INSERT INTO tracks (album_id, title, duration, track_number)
-                VALUES (?, ?, ?, ?)
-            ");
-            foreach ($data['tracks'] as $index => $track) {
-                $stmt->execute([
-                    $albumId,
-                    $track['title'],
-                    $track['duration'],
-                    $index + 1
-                ]);
-            }
-        }
+        insertTracks($conn, $albumId, $data['tracks'] ?? []);
         
         $conn->commit();
-        return ['success' => true, 'message' => 'Album updated successfully'];
+        return ['success' => true, 'message' => SUCCESS_MESSAGES['ALBUM_UPDATED']];
     } catch (PDOException $e) {
         $conn->rollBack();
         error_log($e->getMessage());
-        return ['success' => false, 'message' => 'Album update failed'];
+        return ['success' => false, 'message' => ERROR_MESSAGES['ALBUM_UPDATE_FAILED']];
     }
 }
 
@@ -129,43 +86,137 @@ function updateAlbum($albumId, $userId, $data) {
 function deleteAlbum($albumId, $userId) {
     global $conn;
     
-    try {
-        // Verify ownership
-        $stmt = $conn->prepare("SELECT id FROM albums WHERE id = ? AND user_id = ?");
-        $stmt->execute([$albumId, $userId]);
-        if ($stmt->rowCount() === 0) {
-            return ['success' => false, 'message' => 'Unauthorized'];
+    return handleDatabaseOperation(function() use ($conn, $albumId, $userId) {
+        if (!verifyAlbumOwnership($conn, $albumId, $userId)) {
+            return ['success' => false, 'message' => ERROR_MESSAGES['UNAUTHORIZED']];
         }
         
         $stmt = $conn->prepare("DELETE FROM albums WHERE id = ?");
         $stmt->execute([$albumId]);
         
-        return ['success' => true, 'message' => 'Album deleted successfully'];
-    } catch (PDOException $e) {
-        error_log($e->getMessage());
-        return ['success' => false, 'message' => 'Album deletion failed'];
-    }
+        return ['success' => true, 'message' => SUCCESS_MESSAGES['ALBUM_DELETED']];
+    });
 }
 
 /**
- * Get detailed information about an album
- * @param int $albumId The ID of the album to get details for
+ * Handle database operations with error handling
+ * @param callable $operation The database operation to perform
+ * @return array Success status and message
+ */
+function handleDatabaseOperation($operation) {
+    try {
+        return $operation();
+    } catch (PDOException $e) {
+        error_log($e->getMessage());
+        return ['success' => false, 'message' => 'Operation failed'];
+    }
+}
+
+// Helper function for processing genres
+function processGenres($genresString) {
+    $genres = [];
+    if ($genresString) {
+        foreach (explode(',', $genresString) as $genre) {
+            list($id, $name) = explode(':', $genre);
+            $genres[] = ['id' => $id, 'name' => $name];
+        }
+    }
+    return $genres;
+}
+
+// Helper function for processing tracks
+function processTracks($tracksString) {
+    $tracks = [];
+    if ($tracksString) {
+        foreach (explode(',', $tracksString) as $track) {
+            list($id, $title, $duration, $track_number) = explode(':', $track);
+            $tracks[] = [
+                'id' => $id,
+                'title' => $title,
+                'duration' => $duration,
+                'track_number' => $track_number
+            ];
+        }
+    }
+    return $tracks;
+}
+
+// Helper function for inserting genres
+function insertGenres($conn, $albumId, $genres) {
+    if (!empty($genres)) {
+        $stmt = $conn->prepare("INSERT INTO album_genres (album_id, genre_id) VALUES (?, ?)");
+        foreach ($genres as $genreId) {
+            $stmt->execute([$albumId, $genreId]);
+        }
+    }
+}
+
+// Helper function for inserting tracks
+function insertTracks($conn, $albumId, $tracks) {
+    if (!empty($tracks)) {
+        $stmt = $conn->prepare("
+            INSERT INTO tracks (album_id, title, duration, track_number)
+            VALUES (?, ?, ?, ?)
+        ");
+        foreach ($tracks as $index => $track) {
+            $stmt->execute([
+                $albumId,
+                $track['title'],
+                $track['duration'],
+                $index + 1
+            ]);
+        }
+    }
+}
+
+// Error messages as constants
+const ERROR_MESSAGES = [
+    'UNAUTHORIZED' => 'Unauthorized',
+    'ALBUM_CREATE_FAILED' => 'Album creation failed',
+    'ALBUM_UPDATE_FAILED' => 'Album update failed',
+    'ALBUM_DELETE_FAILED' => 'Album deletion failed',
+    'OPERATION_FAILED' => 'Operation failed'
+];
+
+// Success messages as constants
+const SUCCESS_MESSAGES = [
+    'ALBUM_CREATED' => 'Album created successfully',
+    'ALBUM_UPDATED' => 'Album updated successfully',
+    'ALBUM_DELETED' => 'Album deleted successfully',
+    'RATING_SAVED' => 'Rating saved successfully',
+    'REVIEW_ADDED' => 'Review added successfully'
+];
+
+/**
+ * Get album details with optimized queries
+ * @param int $albumId Album ID
  * @return array|null Album details or null if not found
  */
 function getAlbumDetails($albumId) {
     global $conn;
     
-    try {
-        // Get album information including uploader and rating stats
+    return handleDatabaseOperation(function() use ($conn, $albumId) {
         $stmt = $conn->prepare("
-            SELECT a.*, u.username as uploader,
-                   (SELECT AVG(rating) FROM ratings WHERE album_id = a.id) as avg_rating,
-                   (SELECT COUNT(*) FROM ratings WHERE album_id = a.id) as rating_count,
-                   (SELECT COUNT(*) FROM reviews WHERE album_id = a.id) as review_count
+            SELECT 
+                a.*,
+                u.username as uploader,
+                (SELECT AVG(rating) FROM ratings WHERE album_id = a.id) as avg_rating,
+                (SELECT COUNT(*) FROM ratings WHERE album_id = a.id) as rating_count,
+                (SELECT COUNT(*) FROM reviews WHERE album_id = a.id) as review_count,
+                GROUP_CONCAT(DISTINCT g.id, ':', g.name) as genres,
+                GROUP_CONCAT(
+                    t.id, ':', t.title, ':', t.duration, ':', t.track_number
+                    ORDER BY t.track_number
+                ) as tracks
             FROM albums a
             LEFT JOIN users u ON a.user_id = u.id
+            LEFT JOIN album_genres ag ON a.id = ag.album_id
+            LEFT JOIN genres g ON ag.genre_id = g.id
+            LEFT JOIN tracks t ON a.id = t.album_id
             WHERE a.id = ?
+            GROUP BY a.id
         ");
+        
         $stmt->execute([$albumId]);
         $album = $stmt->fetch();
         
@@ -173,31 +224,11 @@ function getAlbumDetails($albumId) {
             return null;
         }
         
-        // Get album genres
-        $stmt = $conn->prepare("
-            SELECT g.*
-            FROM genres g
-            JOIN album_genres ag ON g.id = ag.genre_id
-            WHERE ag.album_id = ?
-        ");
-        $stmt->execute([$albumId]);
-        $album['genres'] = $stmt->fetchAll();
-        
-        // Get album tracks
-        $stmt = $conn->prepare("
-            SELECT *
-            FROM tracks
-            WHERE album_id = ?
-            ORDER BY track_number
-        ");
-        $stmt->execute([$albumId]);
-        $album['tracks'] = $stmt->fetchAll();
+        $album['genres'] = processGenres($album['genres']);
+        $album['tracks'] = processTracks($album['tracks']);
         
         return $album;
-    } catch (PDOException $e) {
-        error_log($e->getMessage());
-        return null;
-    }
+    });
 }
 
 /**
@@ -210,7 +241,7 @@ function getAlbumDetails($albumId) {
 function rateAlbum($userId, $albumId, $rating) {
     global $conn;
     
-    try {
+    return handleDatabaseOperation(function() use ($conn, $userId, $albumId, $rating) {
         $stmt = $conn->prepare("
             INSERT INTO ratings (user_id, album_id, rating)
             VALUES (?, ?, ?)
@@ -218,11 +249,8 @@ function rateAlbum($userId, $albumId, $rating) {
         ");
         $stmt->execute([$userId, $albumId, $rating, $rating]);
         
-        return ['success' => true, 'message' => 'Rating saved successfully'];
-    } catch (PDOException $e) {
-        error_log($e->getMessage());
-        return ['success' => false, 'message' => 'Rating failed'];
-    }
+        return ['success' => true, 'message' => SUCCESS_MESSAGES['RATING_SAVED']];
+    });
 }
 
 /**
@@ -235,18 +263,15 @@ function rateAlbum($userId, $albumId, $rating) {
 function addReview($userId, $albumId, $content) {
     global $conn;
     
-    try {
+    return handleDatabaseOperation(function() use ($conn, $userId, $albumId, $content) {
         $stmt = $conn->prepare("
             INSERT INTO reviews (user_id, album_id, content)
             VALUES (?, ?, ?)
         ");
         $stmt->execute([$userId, $albumId, $content]);
         
-        return ['success' => true, 'message' => 'Review added successfully'];
-    } catch (PDOException $e) {
-        error_log($e->getMessage());
-        return ['success' => false, 'message' => 'Review failed'];
-    }
+        return ['success' => true, 'message' => SUCCESS_MESSAGES['REVIEW_ADDED']];
+    });
 }
 
 /**
@@ -259,7 +284,7 @@ function addReview($userId, $albumId, $content) {
 function getAlbumReviews($albumId, $page = 1, $limit = 10) {
     global $conn;
     
-    try {
+    return handleDatabaseOperation(function() use ($conn, $albumId, $page, $limit) {
         $offset = ($page - 1) * $limit;
         
         // Get reviews with user information
@@ -284,17 +309,14 @@ function getAlbumReviews($albumId, $page = 1, $limit = 10) {
             'total' => $total,
             'pages' => ceil($total / $limit)
         ];
-    } catch (PDOException $e) {
-        error_log($e->getMessage());
-        return ['reviews' => [], 'total' => 0, 'pages' => 0];
-    }
+    });
 }
 
 // Search albums
 function searchAlbums($query, $filters = [], $page = 1, $limit = 12) {
     global $conn;
     
-    try {
+    return handleDatabaseOperation(function() use ($conn, $query, $filters, $page, $limit) {
         $offset = ($page - 1) * $limit;
         $params = [];
         $conditions = [];
@@ -370,10 +392,14 @@ function searchAlbums($query, $filters = [], $page = 1, $limit = 12) {
             'total' => $total,
             'pages' => ceil($total / $limit)
         ];
-    } catch (PDOException $e) {
-        error_log($e->getMessage());
-        return ['albums' => [], 'total' => 0, 'pages' => 0];
-    }
+    });
+}
+
+// Helper function to verify album ownership
+function verifyAlbumOwnership($conn, $albumId, $userId) {
+    $stmt = $conn->prepare("SELECT id FROM albums WHERE id = ? AND user_id = ?");
+    $stmt->execute([$albumId, $userId]);
+    return $stmt->rowCount() > 0;
 }
 
 // Handle AJAX requests

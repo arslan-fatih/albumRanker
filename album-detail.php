@@ -1,25 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Album Detail - AlbumRanker</title>
-    <link rel="icon" href="img/core-img/favicon.ico">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
-<body>
 <?php
+// Header dosyasını dahil et
 require_once 'includes/header.php';
 
+// URL'den albüm ID'sini al ve kontrol et
 $album_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if (!$album_id) {
     echo '<div class="container mt-5"><div class="alert alert-danger">Album not found.</div></div>';
     exit;
 }
 
-// Get album and uploader information
+// Albüm ve yükleyici bilgilerini veritabanından çek
 $stmt = $conn->prepare("
     SELECT a.*, u.username, u.id as user_id
     FROM albums a
@@ -33,7 +23,7 @@ if (!$album) {
     exit;
 }
 
-// Get uploader's first review and rating (stored in ratings table)
+// Yükleyicinin ilk değerlendirmesini ve puanını al (ratings tablosundan)
 $stmt = $conn->prepare("
     SELECT r.rating, r.created_at, u.username, u.id as user_id, r.id as rating_id
     FROM ratings r
@@ -44,7 +34,7 @@ $stmt = $conn->prepare("
 $stmt->execute([$album_id, $album['user_id']]);
 $first_review = $stmt->fetch();
 
-// Get other user reviews (from reviews table)
+// Diğer kullanıcıların yorumlarını al (reviews tablosundan)
 $stmt = $conn->prepare("
     SELECT r.*, u.username, u.id as user_id
     FROM reviews r
@@ -55,17 +45,19 @@ $stmt = $conn->prepare("
 $stmt->execute([$album_id]);
 $other_reviews = $stmt->fetchAll();
 
-// Handle review submission, editing and deletion
+// Yorum gönderme, düzenleme ve silme işlemlerini yönet
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
     if (isset($_POST['delete_review'])) {
-        // Handle review deletion
+        // Yorum silme işlemini yönet
         $review_id = (int)$_POST['review_id'];
         
         try {
+            // Yorumun sahibini kontrol et
             $stmt = $conn->prepare("SELECT user_id FROM reviews WHERE id = ?");
             $stmt->execute([$review_id]);
             $review = $stmt->fetch();
             
+            // Sadece kendi yorumunu silebilir
             if ($review && $review['user_id'] == $_SESSION['user_id']) {
                 $stmt = $conn->prepare("DELETE FROM reviews WHERE id = ?");
                 $stmt->execute([$review_id]);
@@ -79,16 +71,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
             $error = "An error occurred while deleting the review.";
         }
     } elseif (isset($_POST['edit_review'])) {
-        // Handle review editing
+        // Yorum düzenleme işlemini yönet
         $review_id = (int)$_POST['review_id'];
         $content = trim($_POST['content'] ?? '');
         
         if ($content) {
             try {
+                // Yorumun sahibini kontrol et
                 $stmt = $conn->prepare("SELECT user_id FROM reviews WHERE id = ?");
                 $stmt->execute([$review_id]);
                 $review = $stmt->fetch();
                 
+                // Sadece kendi yorumunu düzenleyebilir
                 if ($review && $review['user_id'] == $_SESSION['user_id']) {
                     $stmt = $conn->prepare("UPDATE reviews SET content = ?, updated_at = NOW() WHERE id = ?");
                     $stmt->execute([$content, $review_id]);
@@ -103,8 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
             }
         }
     } else {
-        // Handle new review submission
-        // Check how many reviews the user has made for this album
+        // Yeni yorum gönderme işlemini yönet
+        // Kullanıcının bu albüm için kaç yorum yaptığını kontrol et
         $stmt = $conn->prepare("SELECT COUNT(*) FROM reviews WHERE user_id = ? AND album_id = ?");
         $stmt->execute([$_SESSION['user_id'], $album_id]);
         $user_review_count = $stmt->fetchColumn();
@@ -112,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
         $content = trim($_POST['content'] ?? '');
         $rating = isset($_POST['rating']) ? (float)$_POST['rating'] : null;
         
+        // Yorum limiti kontrolü
         if ($user_review_count >= 5) {
             $error = "You can add a maximum of 5 reviews per album.";
         } elseif (!$content) {
@@ -120,11 +115,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
             try {
                 $conn->beginTransaction();
                 
-                // Add the review
+                // Yorumu ekle
                 $stmt = $conn->prepare("INSERT INTO reviews (user_id, album_id, content, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())");
                 $stmt->execute([$_SESSION['user_id'], $album_id, $content]);
                 
-                // Add rating only if user hasn't rated before and rating is provided
+                // Eğer kullanıcı daha önce puan vermediyse ve puan sağlandıysa puanı ekle
                 if ($rating !== null && $rating >= 1 && $rating <= 10) {
                     $stmt = $conn->prepare("SELECT id FROM ratings WHERE user_id = ? AND album_id = ?");
                     $stmt->execute([$_SESSION['user_id'], $album_id]);
@@ -136,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
                     }
                 }
                 
-                // Update album's average rating
+                // Albümün ortalama puanını güncelle
                 updateAlbumAverageRating($album_id);
                 $conn->commit();
                 header("Location: album-detail.php?id=$album_id");
@@ -150,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn()) {
     }
 }
 
-// Handle favorite add/remove action
+// Favori ekleme/çıkarma işlemini yönet
 if (isLoggedIn() && isset($_POST['favorite_action'])) {
     $user_id = getCurrentUserId();
     if ($_POST['favorite_action'] === 'add') {
@@ -164,7 +159,7 @@ if (isLoggedIn() && isset($_POST['favorite_action'])) {
     exit;
 }
 
-// Check if user has favorited this album
+// Kullanıcının bu albümü favorilere ekleyip eklemediğini kontrol et
 $is_favorited = false;
 if (isLoggedIn()) {
     $stmt = $conn->prepare("SELECT 1 FROM favorites WHERE user_id = ? AND album_id = ?");
@@ -172,18 +167,30 @@ if (isLoggedIn()) {
     $is_favorited = $stmt->fetchColumn() ? true : false;
 }
 
-// Get current average rating and vote count from ratings table
+// Mevcut ortalama puanı ve oy sayısını ratings tablosundan al
 $stmt = $conn->prepare("SELECT AVG(rating) as avg_rating, COUNT(*) as rating_count FROM ratings WHERE album_id = ?");
 $stmt->execute([$album_id]);
 $rating_stats = $stmt->fetch();
 $avg_rating = $rating_stats && $rating_stats['rating_count'] > 0 ? round($rating_stats['avg_rating'], 1) : null;
 $rating_count = $rating_stats ? $rating_stats['rating_count'] : 0;
 
-// Get favorite count
+// Favori sayısını al
 $stmt = $conn->prepare("SELECT COUNT(*) as favorite_count FROM favorites WHERE album_id = ?");
 $stmt->execute([$album_id]);
 $favorite_count = $stmt->fetchColumn();
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Album Detail - AlbumRanker</title>
+    <link rel="icon" href="img/core-img/favicon.ico">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
 
 <!-- Hero/Banner Area -->
 <section class="hero-area bg-img bg-overlay" style="background-image: url('https://images.pexels.com/photos/257904/pexels-photo-257904.jpeg'); min-height: 340px; display: flex; align-items: center; position: relative;">
@@ -220,18 +227,17 @@ $favorite_count = $stmt->fetchColumn();
                         <img src="<?php echo h(getAlbumCover($album['cover_image'])); ?>" class="img-fluid rounded-start" alt="<?php echo h($album['title']); ?>">
                         <?php if ($album['rating']): ?>
                         <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-primary shadow" style="font-size:1.1em; z-index:2; margin-top:10px; margin-right:10px;">
-                            <i class="fas fa-star"></i> <?php echo number_format($album['rating'], 1); ?>/10
-                            <small>(<?php echo $album['rating_count']; ?>)</small>
+                            <?php echo createRatingBadge($album['rating'], $album['rating_count']); ?>
                         </span>
                         <?php endif; ?>
                     </div>
                     <div class="col-md-8">
                         <div class="card-body position-relative">
                             <?php if (isLoggedIn() && isset($_SESSION['user_id']) && $_SESSION['user_id'] == $album['user_id']): ?>
-                                <button class="delete-album-btn-custom" id="deleteAlbumBtn" title="Delete Album" style="position:absolute;top:10px;right:10px;z-index:2;">
+                                <button class="album-action-btn delete" id="deleteAlbumBtn" title="Delete Album" style="position:absolute;top:10px;right:10px;z-index:2;">
                                     <i class="icon-trash"></i>
                                 </button>
-                                <a href="edit-album.php?id=<?php echo $album_id; ?>" class="edit-album-btn-custom" title="Edit Album" style="position:absolute;top:10px;right:56px;z-index:2;">
+                                <a href="edit-album.php?id=<?php echo $album_id; ?>" class="album-action-btn edit" title="Edit Album" style="position:absolute;top:10px;right:56px;z-index:2;">
                                     <i class="fas fa-edit"></i>
                                 </a>
                             <?php endif; ?>
@@ -239,10 +245,7 @@ $favorite_count = $stmt->fetchColumn();
                             <h5 class="card-subtitle mb-2 text-muted"><?php echo h($album['artist']); ?></h5>
                             <?php if ($album['rating']): ?>
                             <div class="mb-2">
-                                <span class="badge bg-primary">
-                                    <i class="fas fa-star"></i> <?php echo number_format($album['rating'], 1); ?>/10
-                                    <small class="ms-1">(<?php echo $album['rating_count']; ?> oy)</small>
-                                </span>
+                                <?php echo createRatingBadge($album['rating'], $album['rating_count']); ?>
                             </div>
                             <?php endif; ?>
                             <p class="mb-1"><strong>Uploaded by:</strong> <a href="profile.php?user=<?php echo $album['user_id']; ?>"><?php echo h($album['username']); ?></a></p>
@@ -262,8 +265,7 @@ $favorite_count = $stmt->fetchColumn();
             <!-- Yükleyenin ilk yorumu ve puanı -->
             <div class="card mb-4 border-primary shadow position-relative">
                 <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill bg-primary shadow" style="font-size:1.1em; z-index:2; margin-top:10px; margin-right:10px;">
-                    <i class="fas fa-star"></i> <?php echo $avg_rating !== null ? number_format($avg_rating, 1) : 'N/A'; ?>/10
-                    <small>(<?php echo $rating_count; ?>)</small>
+                    <?php echo createRatingBadge($avg_rating, $rating_count); ?>
                 </span>
                 <div class="card-header bg-primary text-white">
                     <a href="profile.php?user=<?php echo $album['user_id']; ?>" class="text-white fw-bold"><?php echo h($album['username']); ?></a> (Album uploader)
@@ -472,32 +474,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-.delete-album-btn-custom {
-    background: #fff;
-    border: none;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    cursor: pointer;
-    transition: box-shadow 0.2s;
-    padding: 0;
-}
-.delete-album-btn-custom i {
-    color: #888;
-    font-size: 18px;
-    transition: color 0.2s;
-}
-.delete-album-btn-custom:hover {
-    box-shadow: 0 4px 16px rgba(255,0,0,0.10);
-}
-.delete-album-btn-custom:hover i {
-    color: #e74c3c;
-}
-.edit-album-btn-custom {
+.album-action-btn {
     background: #fff;
     border: none;
     border-radius: 50%;
@@ -512,15 +489,26 @@ document.addEventListener('DOMContentLoaded', function() {
     padding: 0;
     text-decoration: none;
 }
-.edit-album-btn-custom i {
+
+.album-action-btn i {
     color: #888;
     font-size: 18px;
     transition: color 0.2s;
 }
-.edit-album-btn-custom:hover {
+
+.album-action-btn.delete:hover {
+    box-shadow: 0 4px 16px rgba(255,0,0,0.10);
+}
+
+.album-action-btn.delete:hover i {
+    color: #e74c3c;
+}
+
+.album-action-btn.edit:hover {
     box-shadow: 0 4px 16px rgba(52,152,219,0.10);
 }
-.edit-album-btn-custom:hover i {
+
+.album-action-btn.edit:hover i {
     color: #3498db;
 }
 

@@ -1,0 +1,201 @@
+/* ===============================================
+   AlbumRanker - Ana Stil Dosyası
+   =============================================== */
+
+/* Genel Stiller */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #1a1a1a;
+    color: #fff;
+}
+
+/* Header Stilleri */
+.header-area {
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+    background: rgba(26, 26, 26, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+/* Hero Bölümü Stilleri */
+.hero-area {
+    height: 100vh;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.single-hero-slide {
+    height: 100vh;
+    position: relative;
+    z-index: 1;
+}
+
+.slide-img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    background-size: cover;
+    background-position: center;
+}
+
+/* Albüm Kartı Stilleri */
+.single-album-area {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 30px;
+}
+
+.album-thumb {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.album-thumb img {
+    width: 100%;
+    transition-duration: 500ms;
+}
+
+.album-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    z-index: 1;
+}
+
+/* Form Stilleri */
+.form-control {
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    color: #fff;
+}
+
+.form-control:focus {
+    background-color: #2a2a2a;
+    border-color: #4a4a4a;
+    color: #fff;
+    box-shadow: none;
+}
+
+/* Buton Stilleri */
+.oneMusic-btn {
+    display: inline-block;
+    min-width: 160px;
+    height: 50px;
+    color: #fff;
+    border: none;
+    border-radius: 25px;
+    padding: 0 20px;
+    font-size: 16px;
+    line-height: 50px;
+    text-align: center;
+    background: linear-gradient(to right, #ff0844, #ffb199);
+    transition: all 0.3s ease;
+}
+
+/* Footer Stilleri */
+.footer-area {
+    position: relative;
+    z-index: 1;
+    background-color: #1a1a1a;
+    padding: 80px 0;
+}
+
+/* Responsive Stiller */
+@media (max-width: 991px) {
+    .hero-area {
+        height: 70vh;
+    }
+    
+    .single-hero-slide {
+        height: 70vh;
+    }
+}
+
+@media (max-width: 767px) {
+    .hero-area {
+        height: 50vh;
+    }
+    
+    .single-hero-slide {
+        height: 50vh;
+    }
+}
+
+/* Animasyon Stilleri */
+[data-animation] {
+    opacity: 0;
+    transition: all 0.8s ease;
+}
+
+[data-animation].animated {
+    opacity: 1;
+}
+
+/* Özel Efektler */
+.hover-shadow:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transform: translateY(-5px);
+}
+
+/* Yardımcı Sınıflar */
+.text-gradient {
+    background: linear-gradient(to right, #ff0844, #ffb199);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.bg-gradient {
+    background: linear-gradient(to right, #ff0844, #ffb199);
+}
+
+/* Özel Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ff0844;
+    border-radius: 5px;
+}
+
+/* Loading Animasyonu */
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #1a1a1a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #ff0844;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+} 

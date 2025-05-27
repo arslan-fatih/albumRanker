@@ -27,8 +27,8 @@ if (empty($username)) {
     exit;
 }
 
-if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
-    echo json_encode(['success' => false, 'message' => 'Username can only contain letters, numbers, and underscores.']);
+if (!preg_match('/^[a-zA-Z0-9_\s]+$/', $username)) {
+    echo json_encode(['success' => false, 'message' => 'Username can only contain letters, numbers, underscores and spaces.']);
     exit;
 }
 

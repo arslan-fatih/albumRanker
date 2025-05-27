@@ -40,7 +40,7 @@ try {
         $stmt->execute([$userId, $reviewId]);
     } else {
         // Beğeni ekle
-        $stmt = $conn->prepare("INSERT INTO review_likes (user_id, review_id) VALUES (?, ?)");
+        $stmt = $conn->prepare("INSERT INTO review_likes (user_id, review_id, created_at) VALUES (?, ?, NOW())");
         $stmt->execute([$userId, $reviewId]);
     }
 
@@ -55,6 +55,6 @@ try {
         'message' => $isLiked ? 'Beğeni kaldırıldı.' : 'Beğeni eklendi.'
     ]);
 } catch (PDOException $e) {
-    error_log("Review like error: " . $e->getMessage());
+    error_log("Beğeni işlemi hatası: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'Bir hata oluştu.']);
 } 

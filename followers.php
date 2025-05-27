@@ -44,83 +44,71 @@ if ($type === 'followers') {
 }
 $stmt->execute([$_SESSION['user_id'], $userId]);
 $users = $stmt->fetchAll();
+
+$pageTitle = htmlspecialchars($user['username']) . " - " . ($type === 'followers' ? 'Followers' : 'Following');
+include 'includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($user['username']); ?> - <?php echo $type === 'followers' ? 'Followers' : 'Following'; ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <!-- Header -->
-    <?php include 'header.php'; ?>
-
-    <div class="container my-5">
-        <div class="row">
-            <div class="col-12">
-                <h2 class="mb-4">
-                    <?php echo htmlspecialchars($user['username']); ?> - 
-                    <?php echo $type === 'followers' ? 'Followers' : 'Following'; ?>
-                </h2>
-                
-                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                    <?php foreach ($users as $user): ?>
-                    <div class="col">
-                        <div class="card h-100 shadow-sm">
-                            <div class="card-body text-center">
-                                <img src="<?php echo htmlspecialchars($user['profile_pic'] ? 'uploads/profile/' . $user['profile_pic'] : 'img/core-img/default.jpg'); ?>" 
-                                     class="rounded-circle mb-3" 
-                                     alt="<?php echo htmlspecialchars($user['username']); ?>"
-                                     style="width: 100px; height: 100px; object-fit: cover;">
-                                <h5 class="card-title"><?php echo htmlspecialchars($user['username']); ?></h5>
-                                <p class="card-text text-muted"><?php echo htmlspecialchars($user['bio'] ?? ''); ?></p>
-                                <div class="d-flex justify-content-center gap-2">
-                                    <?php if ($user['id'] != $_SESSION['user_id']): ?>
-                                        <button class="btn btn-outline-primary btn-sm follow-btn" 
-                                                data-user-id="<?php echo $user['id']; ?>">
-                                            <?php echo $user['is_following'] ? 'Unfollow' : 'Follow'; ?>
-                                        </button>
-                                        <a href="profile.php?user=<?php echo $user['id']; ?>" class="btn btn-primary btn-sm">View Profile</a>
-                                    <?php endif; ?>
-                                </div>
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <?php echo htmlspecialchars($user['username']); ?> - 
+                <?php echo $type === 'followers' ? 'Followers' : 'Following'; ?>
+            </h2>
+            
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                <?php foreach ($users as $user): ?>
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center">
+                            <img src="<?php echo htmlspecialchars($user['profile_pic'] ? 'uploads/profile/' . $user['profile_pic'] : 'img/core-img/default.jpg'); ?>" 
+                                 class="rounded-circle mb-3" 
+                                 alt="<?php echo htmlspecialchars($user['username']); ?>"
+                                 style="width: 100px; height: 100px; object-fit: cover;">
+                            <h5 class="card-title"><?php echo htmlspecialchars($user['username']); ?></h5>
+                            <p class="card-text text-muted"><?php echo htmlspecialchars($user['bio'] ?? ''); ?></p>
+                            <div class="d-flex justify-content-center gap-2">
+                                <?php if ($user['id'] != $_SESSION['user_id']): ?>
+                                    <button class="btn btn-outline-primary btn-sm follow-btn" 
+                                            data-user-id="<?php echo $user['id']; ?>">
+                                        <?php echo $user['is_following'] ? 'Unfollow' : 'Follow'; ?>
+                                    </button>
+                                    <a href="profile.php?user=<?php echo $user['id']; ?>" class="btn btn-primary btn-sm">View Profile</a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
-                    <?php endforeach; ?>
                 </div>
+                <?php endforeach; ?>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.follow-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var userId = this.getAttribute('data-user-id');
-                var button = this;
-                fetch('follow.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: 'user_id=' + encodeURIComponent(userId)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        button.textContent = data.following ? 'Unfollow' : 'Follow';
-                    } else {
-                        alert(data.message || 'An error occurred.');
-                    }
-                })
-                .catch(() => alert('An error occurred.'));
-            });
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.follow-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var userId = this.getAttribute('data-user-id');
+            var button = this;
+            fetch('follow.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'user_id=' + encodeURIComponent(userId)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    button.textContent = data.following ? 'Unfollow' : 'Follow';
+                } else {
+                    alert(data.message || 'An error occurred.');
+                }
+            })
+            .catch(() => alert('An error occurred.'));
         });
     });
-    </script>
-</body>
-</html> 
+});
+</script>
+
+<?php include 'includes/footer.php'; ?> 

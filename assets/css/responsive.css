@@ -1,0 +1,168 @@
+/* ===============================================
+   AlbumRanker - Responsive Stil Dosyası
+   =============================================== */
+
+/* Büyük Ekranlar (1200px ve üzeri) */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1140px;
+    }
+}
+
+/* Orta Ekranlar (992px - 1199px) */
+@media (max-width: 1199px) {
+    .container {
+        max-width: 960px;
+    }
+    
+    .hero-slides-content h2 {
+        font-size: 48px;
+    }
+}
+
+/* Tablet Ekranlar (768px - 991px) */
+@media (max-width: 991px) {
+    .container {
+        max-width: 720px;
+    }
+    
+    .hero-slides-content h2 {
+        font-size: 36px;
+    }
+    
+    .section-padding-100 {
+        padding: 70px 0;
+    }
+    
+    .header-area {
+        padding: 15px 0;
+    }
+}
+
+/* Mobil Ekranlar (576px - 767px) */
+@media (max-width: 767px) {
+    .container {
+        max-width: 540px;
+    }
+    
+    .hero-slides-content h2 {
+        font-size: 28px;
+    }
+    
+    .section-padding-100 {
+        padding: 50px 0;
+    }
+    
+    .header-area {
+        padding: 10px 0;
+    }
+    
+    .single-album-area {
+        margin-bottom: 20px;
+    }
+}
+
+/* Küçük Mobil Ekranlar (575px ve altı) */
+@media (max-width: 575px) {
+    .container {
+        max-width: 100%;
+        padding: 0 15px;
+    }
+    
+    .hero-slides-content h2 {
+        font-size: 24px;
+    }
+    
+    .section-padding-100 {
+        padding: 30px 0;
+    }
+    
+    .header-area {
+        padding: 5px 0;
+    }
+    
+    .single-album-area {
+        margin-bottom: 15px;
+    }
+}
+
+/* Özel Responsive Ayarlar */
+@media (max-width: 991px) {
+    /* Header Menü */
+    .main-menu {
+        display: none;
+    }
+    
+    .mobile-menu {
+        display: block;
+    }
+    
+    /* Hero Bölümü */
+    .hero-area {
+        height: 70vh;
+    }
+    
+    .single-hero-slide {
+        height: 70vh;
+    }
+    
+    /* Albüm Kartları */
+    .row-cols-lg-5 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 767px) {
+    /* Hero Bölümü */
+    .hero-area {
+        height: 50vh;
+    }
+    
+    .single-hero-slide {
+        height: 50vh;
+    }
+    
+    /* Albüm Kartları */
+    .row-cols-lg-5 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 575px) {
+    /* Albüm Kartları */
+    .row-cols-lg-5 {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Form Elemanları */
+    .form-control {
+        font-size: 14px;
+    }
+    
+    /* Butonlar */
+    .oneMusic-btn {
+        min-width: 120px;
+        height: 40px;
+        font-size: 14px;
+        line-height: 40px;
+    }
+}
+
+/* Yazdırma Stilleri */
+@media print {
+    .header-area,
+    .footer-area,
+    .oneMusic-btn {
+        display: none !important;
+    }
+    
+    body {
+        background: #fff;
+        color: #000;
+    }
+    
+    .container {
+        width: 100%;
+        max-width: none;
+    }
+} 

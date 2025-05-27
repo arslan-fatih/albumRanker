@@ -8,9 +8,10 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Select2 CSS -->
+    <!-- Select2 CSS - Çoklu seçim için kullanılan kütüphane -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
+        /* Select2 bileşeninin özelleştirilmiş stilleri */
         .select2-container .select2-selection--multiple {
             min-height: 38px;
             border: 1px solid #ced4da;
@@ -22,17 +23,20 @@
             padding: 2px 8px;
             margin-top: 4px;
         }
+        /* Hero alanı için stil tanımlamaları */
         .hero-area.bg-img {
             min-height: 340px;
             display: flex;
             align-items: center;
             position: relative;
         }
+        /* Mobil cihazlar için responsive tasarım */
         @media (max-width: 768px) {
             .hero-area.bg-img {
                 min-height: 220px;
             }
         }
+        /* Form container'ı için stil tanımlamaları */
         .album-upload-form-container {
             margin-top: -100px;
             position: relative;
@@ -50,21 +54,21 @@
 $pageTitle = 'Upload Album - AlbumRanker';
 require_once 'includes/header.php';
 
-// Oturum kontrolü
+// Kullanıcının giriş yapmış olup olmadığını kontrol et
 checkPermission();
 
 $success = $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF kontrolü
+    // CSRF token kontrolü - Güvenlik için
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         $error = 'Security verification failed. Please refresh the page and try again.';
     } else {
-        // Rate limiting kontrolü
+        // Rate limiting kontrolü - Spam önleme
         if (!checkRateLimit('album_upload', 5, 3600)) { // 1 saatte en fazla 5 albüm
             $error = 'Too many album upload attempts. Please wait a while.';
         } else {
-            // Input temizleme
+            // Form verilerini temizle ve güvenli hale getir
             $album_title = sanitize($_POST['album_title']);
             $artist = sanitize($_POST['artist']);
             $cover_url = sanitize($_POST['cover_url']);
@@ -75,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $genres = isset($_POST['genres']) ? array_map('intval', array_filter($_POST['genres'], 'is_numeric')) : [];
             $other_genre = isset($_POST['other_genre']) ? trim($_POST['other_genre']) : '';
             
-            // Validasyon
+            // Form verilerinin doğruluğunu kontrol et
             $errors = [];
             
             if (empty($album_title)) {
@@ -110,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 try {
                     $conn->beginTransaction();
                     
-                    // Albümü kaydet
+                    // Albüm bilgilerini veritabanına kaydet
                     $stmt = $conn->prepare("
                         INSERT INTO albums (title, artist, cover_image, wiki_url, description, release_date, user_id, created_at) 
                         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
@@ -128,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     $albumId = $conn->lastInsertId();
                     
-                    // Puanı kaydet
+                    // Kullanıcının verdiği puanı kaydet
                     if ($rating !== null) {
                         $stmt = $conn->prepare("
                             INSERT INTO ratings (user_id, album_id, rating, created_at) 
@@ -137,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt->execute([$_SESSION['user_id'], $albumId, $rating]);
                     }
                     
-                    // Türleri kaydet
+                    // Seçilen müzik türlerini kaydet
                     if (!empty($genres)) {
                         $stmt = $conn->prepare("
                             INSERT INTO album_genres (album_id, genre_id) 
@@ -148,7 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
                     
-                    // Diğer türü açıklamaya ekle
+                    // "Diğer" türü seçildiyse, açıklamaya ekle
                     if (in_array('other', $_POST['genres'] ?? []) && !empty($other_genre)) {
                         $stmt = $conn->prepare("UPDATE albums SET description = CONCAT(IFNULL(description, ''), '\n[Other Genre: ', ?, ']') WHERE id = ?");
                         $stmt->execute([$other_genre, $albumId]);
@@ -171,12 +175,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Türleri getir
+// Veritabanından tüm müzik türlerini getir
 $stmt = $conn->query("SELECT * FROM genres ORDER BY name");
 $genres = $stmt->fetchAll();
 ?>
 
-<!-- Hero/Banner Area Discover'daki gibi -->
+<!-- Hero/Banner Alanı -->
 <section class="hero-area bg-img bg-overlay" style="background-image: url('https://images.pexels.com/photos/257904/pexels-photo-257904.jpeg'); min-height: 340px; display: flex; align-items: center; position: relative;">
     <div class="container">
         <div class="row justify-content-center">
@@ -190,6 +194,7 @@ $genres = $stmt->fetchAll();
     </div>
 </section>
 
+<!-- Albüm Yükleme Formu -->
 <div class="container album-upload-form-container" style="max-width: 600px;">
     <div class="card shadow p-4 mb-5 bg-white rounded">
         <?php echo showFlashMessage(); ?>
@@ -201,18 +206,21 @@ $genres = $stmt->fetchAll();
         <form action="album-upload.php" method="post" class="needs-validation" novalidate>
             <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
             
+            <!-- Albüm Başlığı -->
             <div class="mb-3">
                 <label for="album_title" class="form-label">Album Title</label>
                 <input type="text" class="form-control" id="album_title" name="album_title" required value="<?php echo isset($_POST['album_title']) ? h($_POST['album_title']) : ''; ?>">
                 <div class="invalid-feedback">Album title is required.</div>
             </div>
             
+            <!-- Sanatçı Adı -->
             <div class="mb-3">
                 <label for="artist" class="form-label">Artist</label>
                 <input type="text" class="form-control" id="artist" name="artist" required value="<?php echo isset($_POST['artist']) ? h($_POST['artist']) : ''; ?>">
                 <div class="invalid-feedback">Artist name is required.</div>
             </div>
             
+            <!-- Kapak Resmi URL -->
             <div class="mb-3">
                 <label for="cover_url" class="form-label">Cover Image URL</label>
                 <input type="url" class="form-control" id="cover_url" name="cover_url" required placeholder="https://..." value="<?php echo isset($_POST['cover_url']) ? h($_POST['cover_url']) : ''; ?>">
@@ -229,18 +237,21 @@ $genres = $stmt->fetchAll();
                 </div>
             </div>
             
+            <!-- Wikipedia Bağlantısı -->
             <div class="mb-3">
                 <label for="wiki_url" class="form-label">Wikipedia Album Link (optional)</label>
                 <input type="url" class="form-control" id="wiki_url" name="wiki_url" placeholder="https://..." value="<?php echo isset($_POST['wiki_url']) ? h($_POST['wiki_url']) : ''; ?>">
                 <div class="invalid-feedback">Please enter a valid Wikipedia URL.</div>
             </div>
             
+            <!-- Yayın Tarihi -->
             <div class="mb-3">
                 <label for="release_date" class="form-label">Release Date</label>
                 <input type="date" class="form-control" id="release_date" name="release_date" value="<?php echo isset($_POST['release_date']) ? h($_POST['release_date']) : ''; ?>">
                 <div class="form-text">Optional. Enter the album's release date.</div>
             </div>
             
+            <!-- Müzik Türleri -->
             <div class="mb-3">
                 <label for="genres" class="form-label">Genres</label>
                 <select class="form-select select2" id="genres" name="genres[]" multiple onchange="toggleOtherGenre()">
@@ -250,38 +261,60 @@ $genres = $stmt->fetchAll();
                         <?php echo h($genre['name']); ?>
                     </option>
                     <?php endforeach; ?>
-                    <option value="other" <?php echo (isset($_POST['genres']) && in_array('other', $_POST['genres'])) ? 'selected' : ''; ?>>Other</option>
+                    <option value="other" <?php echo isset($_POST['genres']) && in_array('other', $_POST['genres']) ? 'selected' : ''; ?>>Other</option>
                 </select>
-                <div class="form-text">You can search for genres and select multiple. Use "Other" option to enter a new genre.</div>
-                <input type="text" class="form-control mt-2" id="other_genre_input" name="other_genre" placeholder="Enter other genre..." style="display:<?php echo (isset($_POST['genres']) && in_array('other', $_POST['genres'])) ? 'block' : 'none'; ?>;" value="<?php echo isset($_POST['other_genre']) ? h($_POST['other_genre']) : ''; ?>">
             </div>
             
+            <!-- Diğer Tür Alanı -->
+            <div class="mb-3" id="otherGenreContainer" style="display: none;">
+                <label for="other_genre" class="form-label">Other Genre</label>
+                <input type="text" class="form-control" id="other_genre" name="other_genre" value="<?php echo isset($_POST['other_genre']) ? h($_POST['other_genre']) : ''; ?>">
+            </div>
+            
+            <!-- Albüm Açıklaması -->
             <div class="mb-3">
                 <label for="description" class="form-label">Description</label>
-                <textarea class="form-control" id="description" name="description" rows="3"><?php 
-                    echo isset($_POST['description']) ? h($_POST['description']) : ''; 
-                ?></textarea>
+                <textarea class="form-control" id="description" name="description" rows="4"><?php echo isset($_POST['description']) ? h($_POST['description']) : ''; ?></textarea>
             </div>
             
+            <!-- Puan -->
             <div class="mb-3">
-                <label for="rating" class="form-label">Rating (1-10)</label>
-                <input type="number" class="form-control" id="rating" name="rating" min="1" max="10" step="0.1"
-                       value="<?php echo isset($_POST['rating']) ? h($_POST['rating']) : ''; ?>">
-                <div class="invalid-feedback">Rating must be between 1-10.</div>
+                <label for="rating" class="form-label">Your Rating (1-10)</label>
+                <input type="number" class="form-control" id="rating" name="rating" min="1" max="10" step="0.1" value="<?php echo isset($_POST['rating']) ? h($_POST['rating']) : ''; ?>">
+                <div class="form-text">Optional. Enter your rating for this album.</div>
             </div>
             
-            <button type="submit" class="btn btn-primary w-100">Upload Album</button>
+            <!-- Gönder Butonu -->
+            <button type="submit" class="btn btn-primary">Upload Album</button>
         </form>
     </div>
 </div>
 
-<?php require_once 'includes/footer.php'; ?>
-
-<!-- Select2 JS -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Select2 ve Form Doğrulama JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-// Form validasyonu
+// Select2'yi başlat
+$(document).ready(function() {
+    $('.select2').select2({
+        placeholder: "Select genres...",
+        allowClear: true
+    });
+});
+
+// Diğer tür alanını göster/gizle
+function toggleOtherGenre() {
+    var genres = document.getElementById('genres');
+    var otherGenreContainer = document.getElementById('otherGenreContainer');
+    var selectedOptions = Array.from(genres.selectedOptions).map(option => option.value);
+    
+    if (selectedOptions.includes('other')) {
+        otherGenreContainer.style.display = 'block';
+    } else {
+        otherGenreContainer.style.display = 'none';
+    }
+}
+
+// Form doğrulama
 (function() {
     'use strict';
     var forms = document.querySelectorAll('.needs-validation');
@@ -295,26 +328,8 @@ $genres = $stmt->fetchAll();
         }, false);
     });
 })();
-// Other genre input toggle
-function toggleOtherGenre() {
-    var select = document.getElementById('genres');
-    var otherInput = document.getElementById('other_genre_input');
-    var selected = Array.from(select.selectedOptions).map(function(opt) { return opt.value; });
-    if (selected.includes('other')) {
-        otherInput.style.display = 'block';
-    } else {
-        otherInput.style.display = 'none';
-        otherInput.value = '';
-    }
-}
-// Select2 başlat
-$(document).ready(function() {
-    $('#genres').select2({
-        placeholder: 'Select genres',
-        allowClear: true,
-        width: '100%'
-    });
-});
 </script>
+
+<?php require_once 'includes/footer.php'; ?>
 </body>
 </html> 

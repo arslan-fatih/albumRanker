@@ -1,5 +1,6 @@
 // Global variables
 let currentUser = null;
+const ALERT_CONTAINER = document.querySelector('.alert-container') || document.body;
 
 // Initialize the application
 function init() {
@@ -129,6 +130,7 @@ function handleSearch(event) {
     const formData = new FormData(event.target);
     const params = new URLSearchParams({
         q: formData.get('q'),
+        type: formData.get('type'),
         genre: formData.get('genre'),
         sort: formData.get('sort')
     });
@@ -162,18 +164,29 @@ function showAlert(message, type = 'info') {
         </button>
     `;
     
-    const container = document.querySelector('.alert-container') || document.body;
-    container.insertBefore(alertDiv, container.firstChild);
+    ALERT_CONTAINER.insertBefore(alertDiv, ALERT_CONTAINER.firstChild);
     
     setTimeout(() => alertDiv.remove(), 5000);
 }
 
 // Helper function to submit forms
-function submitForm(form, url) {
-    return fetch(url, {
-        method: 'POST',
-        body: new FormData(form)
-    }).then(response => response.json());
+async function submitForm(form, url) {
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: new FormData(form)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Form submission error:', error);
+        showAlert('An error occurred while submitting the form', 'danger');
+        return { success: false, message: 'Form submission failed' };
+    }
 }
 
 // Initialize on page load
